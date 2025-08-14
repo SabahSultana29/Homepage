@@ -1,0 +1,267 @@
+body {
+  background-color: #f8f8fa;
+  margin: 0;
+}
+
+/* NAVBAR */
+.sc-navbar .navbar-nav {
+  margin-left: 0;
+  margin-right: 0;
+  gap: 18px;
+}
+
+.navbar-nav .nav-item {
+  margin-right: 0;
+}
+
+.sc-navbar .navbar-brand {
+  display: flex;
+  align-items: center;
+  font-size: 1.17em;
+  font-weight: 400;
+}
+
+.sc-navbar .navbar-brand img {
+  height: 32px;
+  margin-right: 8px;
+}
+
+.sc-navbar .navbar-nav {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.navbar-nav .nav-item:last-child {
+  margin-right: 0;
+}
+
+.sc-navbar .nav-link {
+  color: #232729;
+  font-weight: 400;
+  font-size: 1rem;
+  padding: 0 25px;
+}
+
+.sc-navbar .nav-link.active,
+.sc-navbar .nav-link:focus,
+.sc-navbar .nav-link:hover {
+  color: #22988c;
+}
+
+.btn-login {
+  font-size: 0.98em;
+  padding: 2px 15px;
+  border-radius: 6px;
+  border: 1px solid #cfd8df;
+  background: #fff;
+  font-weight: 500;
+  color: #22988c;
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  align-self: center;
+}
+
+@media (max-width: 992px) {
+  .sc-navbar .navbar-collapse {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .sc-navbar .btn-login {
+    margin-left: 12px;
+  }
+}
+
+/* CAROUSEL */
+.carousel-bg {
+  background: linear-gradient(90deg, #29a9df 65%, #2cb39a 100%);
+  border-radius: 22px;
+  color: #fff;
+  padding: 44px 38px 0 38px;
+  margin-top: 40px;
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+  width: 5%;
+}
+
+.carousel-inner {
+  min-height: 330px;
+  display: flex;
+  align-items: center;
+}
+
+.carousel-indicators [data-bs-target] {
+  background-color: #a9edfa;
+}
+
+.carousel-indicators button {
+  background-color: #a9edfa;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  margin: 0 4px;
+  opacity: 0.5;
+  transition: opacity 0.3s;
+}
+
+.carousel-indicators button.active {
+  opacity: 1;
+}
+
+.carousel-indicators {
+  margin-bottom: 1.5rem;
+}
+
+.carousel-bg .badge {
+  font-size: 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.carousel-bg h2 {
+  font-size: 2.05rem;
+  font-weight: 600;
+}
+
+/* Carousel image */
+.sc-hero-img {
+  max-width: 235px;
+  border-radius: 14px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.13);
+}
+
+/* QUICK ACTIONS */
+.quick-actions .card {
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: none;
+  min-height: 260px;
+  transition: box-shadow 0.18s;
+}
+
+.quick-actions .card:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.quick-icon-bg {
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  margin: 0 auto 14px auto;
+  font-size: 2.1rem;
+}
+
+.quick-mobile {
+  background: #ffeee0;
+  color: #f4922e;
+}
+
+.quick-clipboard {
+  background: #e6f2ff;
+  color: #0082e3;
+}
+
+.quick-question {
+  background: #ffe9f5;
+  color: #cc249a;
+}
+
+.quick-card {
+  background: #fffddc;
+  color: #d8b233;
+}
+
+.quick-trophy {
+  background: #e8fbe4;
+  color: #3bc24e;
+}
+
+.quick-phone {
+  background: #f8e7e7;
+  color: #dc3545;
+}
+
+/* FOOTER */
+.footer-links {
+  background: #10131a;
+  color: #fff;
+  font-size: 0.98rem;
+  margin-top: 44px;
+  padding: 32px 0 0 0;
+}
+
+.footer-links .fw-bold {
+  color: #fff;
+}
+
+.footer-links a {
+  color: #efefef;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.footer-links a:hover {
+  color: #abd9b6;
+}
+
+.footer-policy {
+  border-top: 1px solid #233052;
+  padding-top: 15px;
+  color: #aaa;
+  font-size: 0.93rem;
+}
+
+.footer-logo {
+  height: 34px;
+  margin-right: 15px;
+}
+
+.social-icons a {
+  color: #fff;
+  margin-right: 15px;
+  font-size: 1.37rem;
+}
+
+.social-icons a:hover {
+  color: #abd9b6;
+}
+
+/* Additional React-specific styles */
+.carousel-item {
+  display: none;
+}
+
+.carousel-item.active {
+  display: block;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .carousel-bg {
+    padding: 24px 20px 0 20px;
+  }
+
+  .carousel-bg h2 {
+    font-size: 1.5rem;
+  }
+
+  .sc-hero-img {
+    max-width: 200px;
+    margin-top: 20px;
+  }
+
+  .footer-policy {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+}
