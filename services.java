@@ -1,10 +1,12 @@
+
+### ✅ `CustomerService.java`
 package com.bank.creditcard.service;
 
 import com.bank.creditcard.model.Customer;
 import com.bank.creditcard.repository.CustomerRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 public class CustomerService {
@@ -15,18 +17,28 @@ public class CustomerService {
         this.customerRepository = customerRepository;
     }
 
-    public Optional<Customer> getCustomerById(Long id) {
-        return customerRepository.findById(id);
+    // Get customer by ID
+    public ResponseEntity<Customer> getCustomerById(Long id) {
+        Customer customer = customerRepository.findById(id).orElse(null);
+        if (customer == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(customer, HttpStatus.OK);
     }
 
-    public Customer saveCustomer(Customer customer) {
-        return customerRepository.save(customer);
+    // Save new customer
+    public ResponseEntity<Customer> saveCustomer(Customer customer) {
+        Customer savedCustomer = customerRepository.save(customer);
+        return new ResponseEntity<>(savedCustomer, HttpStatus.CREATED);
     }
 }
-//CustomerService.java file
+```
 
-2️⃣ OfferService.java (updated to match DTOs)
+---
 
+### ✅ `OfferService.java`
+
+```java
 package com.bank.creditcard.service;
 
 import com.bank.creditcard.dto.AcceptOfferRequest;
@@ -35,10 +47,11 @@ import com.bank.creditcard.model.CreditCardAccount;
 import com.bank.creditcard.model.CreditCardOffer;
 import com.bank.creditcard.repository.CreditCardAccountRepository;
 import com.bank.creditcard.repository.OfferRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -59,13 +72,16 @@ public class OfferService {
         this.printShopService = printShopService;
     }
 
-    public AcceptOfferResponse acceptOffer(AcceptOfferRequest request) {
-        Optional<CreditCardOffer> offerOpt = offerRepository.findById(request.getOfferId());
-        if (offerOpt.isEmpty()) {
-            return new AcceptOfferResponse(false, "Offer not found", null);
-        }
+    // Accept an offer and create account
+    public ResponseEntity<AcceptOfferResponse> acceptOffer(AcceptOfferRequest request) {
+        CreditCardOffer offer = offerRepository.findById(request.getOfferId()).orElse(null);
 
-        CreditCardOffer offer = offerOpt.get();
+        if (offer == null) {
+            return new ResponseEntity<>(
+                    new AcceptOfferResponse(false, "Offer not found", null),
+                    HttpStatus.NOT_FOUND
+            );
+        }
 
         CreditCardAccount account = new CreditCardAccount();
         account.setCustomerId(request.getCustomerId());
@@ -80,9 +96,13 @@ public class OfferService {
         emailService.sendConfirmation(account.getCustomerId(), account.getCardNumber());
         printShopService.printCard(account.getId());
 
-        return new AcceptOfferResponse(true, "Card created successfully!", account.getCardNumber());
+        AcceptOfferResponse response =
+                new AcceptOfferResponse(true, "Card created successfully!", account.getCardNumber());
+
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    // Helper method to generate a random card number
     private String generateCardNumber() {
         Random random = new Random();
         StringBuilder sb = new StringBuilder();
@@ -92,73 +112,96 @@ public class OfferService {
         return sb.toString();
     }
 }
-
+```
 
 ---
 
-3️⃣ EmailService.java
+### ✅ `EmailService.java`
 
+```java
 package com.bank.creditcard.service;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
 public class EmailService {
 
-    public void sendConfirmation(Long customerId, String cardNumber) {
-        // In real life, send email via SMTP/SES/etc.
-        System.out.println("Email sent to Customer " + customerId +
-                " with card number " + cardNumber);
+    // Send confirmation email (simulated)
+    public ResponseEntity<String> sendConfirmation(Long customerId, String cardNumber) {
+        String message = "Email sent to Customer ID " + customerId +
+                " with Card Number: " + cardNumber;
+        return new ResponseEntity<>(message, HttpStatus.OK);
     }
 }
-
+```
 
 ---
 
-4️⃣ PrintShopService.java
+### ✅ `PrintShopService.java`
 
+```java
 package com.bank.creditcard.service;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PrintShopService {
 
-    public void printCard(Long accountId) {
-        // Simulate printing process
-        System.out.println("Card printing request raised for account ID: " + accountId);
+    // Print physical card request (simulated)
+    public ResponseEntity<String> printCard(Long accountId) {
+        String message = "Print request created for Account ID: " + accountId;
+        return new ResponseEntity<>(message, HttpStatus.OK);
     }
 }
-
+```
 
 ---
 
-5️⃣ TransactionService.java
+### ✅ `TransactionService.java`
 
+```java
 package com.bank.creditcard.service;
 
+import com.bank.creditcard.model.Transaction;
+import com.bank.creditcard.repository.TransactionRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class TransactionService {
 
-    public void processTransaction(Long accountId, double amount) {
-        // Dummy logic for transaction simulation
-        System.out.println("Processing transaction of amount ₹" + amount + " for account ID: " + accountId);
+    private final TransactionRepository transactionRepository;
+
+    public TransactionService(TransactionRepository transactionRepository) {
+        this.transactionRepository = transactionRepository;
+    }
+
+    // Get all transactions
+    public ResponseEntity<List<Transaction>> getAllTransactions() {
+        List<Transaction> transactions = transactionRepository.findAll();
+        return new ResponseEntity<>(transactions, HttpStatus.OK);
+    }
+
+    // Save new transaction
+    public ResponseEntity<Transaction> saveTransaction(Transaction transaction) {
+        Transaction saved = transactionRepository.save(transaction);
+        return new ResponseEntity<>(saved, HttpStatus.CREATED);
+    }
+
+    // Get transaction by ID
+    public ResponseEntity<Transaction> getTransactionById(Long id) {
+        Transaction transaction = transactionRepository.findById(id).orElse(null);
+        if (transaction == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(transaction, HttpStatus.OK);
     }
 }
 
-
-
-
-✅ Now you have all 5 service classes ready:
-
-CustomerService
-
-OfferService
-
-EmailService
-
-PrintShopService
-
-TransactionService
