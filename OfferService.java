@@ -282,3 +282,36 @@ public class EmailLog {
     }
 }
 
+//updated printShopService
+
+package com.bank.creditcard.service;
+
+import com.bank.creditcard.model.PrintShopRequest;
+import com.bank.creditcard.repository.PrintShopRequestRepository;
+import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
+
+@Service
+public class PrintShopService {
+
+    private final PrintShopRequestRepository printShopRepository;
+
+    public PrintShopService(PrintShopRequestRepository printShopRepository) {
+        this.printShopRepository = printShopRepository;
+    }
+
+    public void createPrintRequest(Long accountId, String details) {
+        PrintShopRequest request = new PrintShopRequest();
+        request.setAccountId(accountId);
+        request.setDetails(details);
+        request.setRequestTime(LocalDateTime.now());
+        request.setStatus("queued");
+        printShopRepository.save(request);
+
+        // Print to console
+        System.out.println("🖨️ PrintShop Request Created: " + request);
+    }
+}
+
+
+
