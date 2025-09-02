@@ -392,6 +392,37 @@ public class OfferService {
     }
 }
 
+updated printshopservice
+package com.scb.creditcardorigination.userStory6.service;
+
+import com.scb.creditcardorigination.userStory6.model.PrintShopRequest;
+import com.scb.creditcardorigination.userStory6.repository.PrintShopRequestRepository;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+
+@Service
+public class PrintShopService {
+
+    private final PrintShopRequestRepository printShopRepository;
+
+    public PrintShopService(PrintShopRequestRepository printShopRepository) {
+        this.printShopRepository = printShopRepository;
+    }
+
+    public void printCard(Long accountId) {
+        PrintShopRequest request = new PrintShopRequest();
+        request.setAccountId(accountId);
+        request.setDetails("Print and ship physical credit card");
+        request.setRequestTime(LocalDateTime.now());
+        request.setStatus("queued");
+        
+        printShopRepository.save(request);
+
+        // Print to console
+        System.out.println("🖨️ PrintShop Request Created: " + request);
+    }
+}
 
 
 
