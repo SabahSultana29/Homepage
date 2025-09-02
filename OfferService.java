@@ -199,3 +199,86 @@ public class EmailLogController {
         return emailLogRepository.findAll();
     }
 }
+
+//Modal for Email_log
+package com.bank.creditcard.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "email_log")
+public class EmailLog {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private Long customerId;
+
+    private String cardNumber;
+
+    @Column(length = 1000)
+    private String message;
+
+    private LocalDateTime sentAt;
+
+    // Constructors
+    public EmailLog() {}
+
+    public EmailLog(Long customerId, String cardNumber, String message, LocalDateTime sentAt) {
+        this.customerId = customerId;
+        this.cardNumber = cardNumber;
+        this.message = message;
+        this.sentAt = sentAt;
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public Long getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(Long customerId) {
+        this.customerId = customerId;
+    }
+
+    public String getCardNumber() {
+        return cardNumber;
+    }
+
+    public void setCardNumber(String cardNumber) {
+        this.cardNumber = cardNumber;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public LocalDateTime getSentAt() {
+        return sentAt;
+    }
+
+    public void setSentAt(LocalDateTime sentAt) {
+        this.sentAt = sentAt;
+    }
+
+    @Override
+    public String toString() {
+        return "EmailLog{" +
+                "id=" + id +
+                ", customerId=" + customerId +
+                ", cardNumber='" + cardNumber + '\'' +
+                ", message='" + message + '\'' +
+                ", sentAt=" + sentAt +
+                '}';
+    }
+}
+
