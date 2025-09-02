@@ -313,5 +313,85 @@ public class PrintShopService {
     }
 }
 
+//updated offerService.java
+package com.scb.creditcardorigination.userStory6.service;
+
+import com.scb.creditcardorigination.userStory6.dto.AcceptOfferRequest;
+import com.scb.creditcardorigination.userStory6.dto.AcceptOfferResponse;
+import com.scb.creditcardorigination.userStory6.model.CreditCardAccount;
+import com.scb.creditcardorigination.userStory6.model.CreditCardOffer;
+import com.scb.creditcardorigination.userStory6.repository.CreditCardAccountRepository;
+import com.scb.creditcardorigination.userStory6.repository.OfferRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+
+@Service
+public class OfferService {
+
+    private final OfferRepository offerRepository;
+    private final CreditCardAccountRepository accountRepository;
+    private final EmailService emailService;
+    private final PrintShopService printShopService;
+
+    public OfferService(OfferRepository offerRepository,
+                        CreditCardAccountRepository accountRepository,
+                        EmailService emailService,
+                        PrintShopService printShopService) {
+        this.offerRepository = offerRepository;
+        this.accountRepository = accountRepository;
+        this.emailService = emailService;
+        this.printShopService = printShopService;
+    }
+
+    @Transactional
+    public ResponseEntity<AcceptOfferResponse> acceptOffer(AcceptOfferRequest request) {
+        CreditCardOffer offer = offerRepository.findById(request.getOfferId()).orElse(null);
+        
+        if (offer == null) {
+            return new ResponseEntity<>(
+                new AcceptOfferResponse(false, "Offer not found"), 
+                HttpStatus.NOT_FOUND
+            );
+        }
+
+        CreditCardAccount account = new CreditCardAccount();
+        account.setId(request.getOfferId());
+        account.setCardNumber(generateCardNumber());
+        account.setCardNumber(offer.getCardNumber());
+        account.setCreatedAt(offer.getCreditLimit());
+        account.setStatus("ACTIVE");
+        account.setCreatedAt(LocalDateTime.now());
+        accountRepository.save(account);
+
+        emailService.sendConfirmation(account.getId(), account.getCardNumber());
+        printShopService.printCard(account.getId());
+
+        AcceptOfferResponse response = 
+            new AcceptOfferResponse(true, "Card created successfully");
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    private String generateCardNumber() {
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 16; i++) {
+            sb.append(random.nextInt(10));
+        }
+        return sb.toString();
+    }
+
+    public List<CreditCardOffer> getAllOffers() {
+        return offerRepository.findAll();
+    }
+}
+
+
 
 
