@@ -424,5 +424,31 @@ public class PrintShopService {
     }
 }
 
+//updated emailService.java
+public void sendConfirmation(Long customerId, String cardNumber) {
+    // Save email log entry
+    EmailLog emailLog = new EmailLog();
+    emailLog.setCustomerId(customerId);
+    emailLog.setCardNumber(cardNumber);
+
+    // Add subject + body
+    String subject = "Credit Card Creation Confirmation";
+    String body = "Dear Customer,\n\nYour credit card with number " + cardNumber +
+                  " has been created successfully.\n\nThank you for choosing our services.\n\nRegards,\nBank Team";
+
+    emailLog.setMessage("Subject: " + subject + "\n\nBody:\n" + body);
+    emailLog.setSentAt(LocalDateTime.now());
+
+    emailLogRepository.save(emailLog);
+
+    // Print formatted email in console
+    System.out.println("===== EMAIL SENT =====");
+    System.out.println("To Customer ID: " + customerId);
+    System.out.println("Card Number: " + cardNumber);
+    System.out.println("Subject: " + subject);
+    System.out.println("Body:\n" + body);
+    System.out.println("======================");
+}
+
 
 
