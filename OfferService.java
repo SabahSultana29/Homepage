@@ -450,5 +450,48 @@ public void sendConfirmation(Long customerId, String cardNumber) {
     System.out.println("======================");
 }
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+@Service
+public class EmailService {
+
+    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+
+    private final EmailLogRepository emailLogRepository;
+
+    public EmailService(EmailLogRepository emailLogRepository) {
+        this.emailLogRepository = emailLogRepository;
+    }
+
+    public void sendConfirmation(Long customerId, String cardNumber) {
+        // Save email log entry
+        EmailLog emailLog = new EmailLog();
+        emailLog.setCustomerId(customerId);
+        emailLog.setCardNumber(cardNumber);
+
+        String subject = "Credit Card Creation Confirmation";
+        String body = "Dear Customer,\n\nYour credit card with number " + cardNumber +
+                      " has been created successfully.\n\nThank you for choosing our services.\n\nRegards,\nBank Team";
+
+        emailLog.setMessage("Subject: " + subject + "\n\nBody:\n" + body);
+        emailLog.setSentAt(LocalDateTime.now());
+
+        emailLogRepository.save(emailLog);
+
+        // ✅ Use logger instead of System.out
+        log.info("\n===== EMAIL SENT =====\n" +
+                 "To Customer ID: {}\n" +
+                 "Card Number: {}\n" +
+                 "Subject: {}\n" +
+                 "Body:\n{}\n" +
+                 "======================",
+                 customerId, cardNumber, subject, body);
+    }
+}
+
+
+
 
 
