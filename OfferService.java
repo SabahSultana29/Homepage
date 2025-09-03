@@ -752,6 +752,91 @@ public class PrintShopService {
     }
 }
 
+//Updated printshopservice code 
+
+package com.scb.creditcardorigination.userStory6.service;
+
+import com.scb.creditcardorigination.userStory6.repository.PrintShop;
+import com.scb.creditcardorigination.userStory6.repository.CustomerRepository;
+import com.scb.creditcardorigination.userStory6.model.PrintShopRequest;
+import com.scb.creditcardorigination.userStory6.model.Customer;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+public class PrintShopService {
+
+    private final PrintShop printShopRepository;
+    private final CustomerRepository customerRepository;
+
+    @Autowired
+    public PrintShopService(PrintShop printShopRepository, CustomerRepository customerRepository) {
+        this.printShopRepository = printShopRepository;
+        this.customerRepository = customerRepository;
+    }
+
+    // save request
+    public PrintShopRequest saveRequest(PrintShopRequest request) {
+        // ✅ fetch customer from DB
+        Customer customer = customerRepository.findById(request.getCustomerId())
+                .orElseThrow(() -> new RuntimeException("Customer not found with ID: " + request.getCustomerId()));
+
+        // ✅ set accountId automatically from customer
+        request.setAccountId(customer.getAccountId());
+
+        // ✅ set request time if not provided
+        if (request.getRequestTime() == null) {
+            request.setRequestTime(LocalDateTime.now());
+        }
+
+        PrintShopRequest saved = printShopRepository.save(request);
+
+        System.out.println("✅ PrintShop Request Created:");
+        System.out.println("ID=" + saved.getId() +
+                ", CustomerID=" + saved.getCustomerId() +
+                ", AccountID=" + saved.getAccountId() +
+                ", Status=" + saved.getStatus() +
+                ", Details=" + saved.getDetails() +
+                ", RequestTime=" + saved.getRequestTime());
+
+        return saved;
+    }
+
+    // fetch all requests
+    public List<PrintShopRequest> getAllRequests() {
+        List<PrintShopRequest> requests = printShopRepository.findAll();
+
+        System.out.println("📋 All PrintShop Requests:");
+        for (PrintShopRequest req : requests) {
+            System.out.println("ID=" + req.getId() +
+                    ", CustomerID=" + req.getCustomerId() +
+                    ", AccountID=" + req.getAccountId() +
+                    ", Status=" + req.getStatus() +
+                    ", Details=" + req.getDetails() +
+                    ", RequestTime=" + req.getRequestTime());
+        }
+
+        return requests;
+    }
+
+    // print card
+    public void printCard(long id) {
+        PrintShopRequest req = printShopRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found with ID: " + id));
+
+        System.out.println("🖨️ Printing card for PrintShop Request:");
+        System.out.println("ID=" + req.getId() +
+                ", CustomerID=" + req.getCustomerId() +
+                ", AccountID=" + req.getAccountId() +
+                ", Status=" + req.getStatus() +
+                ", Details=" + req.getDetails() +
+                ", RequestTime=" + req.getRequestTime());
+    }
+}
 
 
 
