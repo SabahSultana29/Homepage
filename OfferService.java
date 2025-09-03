@@ -925,6 +925,212 @@ public class PrintShopService {
     }
 }
 
+//New feature TP
+//transaction.java modal class
+package com.scb.tps.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "transactions")
+public class Transaction {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private Long customerId;
+    private String name;
+    private String dob;
+    private String email;
+    private String phone;
+    private int creditScore;
+    private String product;          // Card type / product
+    private String validityPeriod;   // e.g., 2025-2030
+    private String creditLimit;      // e.g., ₹2,00,000
+    private String status;           // Approved
+    private LocalDate approvalDate;  // Auto-filled
+
+    // Getters & Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Long getCustomerId() { return customerId; }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getDob() { return dob; }
+    public void setDob(String dob) { this.dob = dob; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public int getCreditScore() { return creditScore; }
+    public void setCreditScore(int creditScore) { this.creditScore = creditScore; }
+
+    public String getProduct() { return product; }
+    public void setProduct(String product) { this.product = product; }
+
+    public String getValidityPeriod() { return validityPeriod; }
+    public void setValidityPeriod(String validityPeriod) { this.validityPeriod = validityPeriod; }
+
+    public String getCreditLimit() { return creditLimit; }
+    public void setCreditLimit(String creditLimit) { this.creditLimit = creditLimit; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public LocalDate getApprovalDate() { return approvalDate; }
+    public void setApprovalDate(LocalDate approvalDate) { this.approvalDate = approvalDate; }
+}
+
+//transaction controller.java
+package com.scb.tps.controller;
+
+import com.scb.tps.model.Transaction;
+import com.scb.tps.service.TransactionService;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/transactions")
+public class TransactionController {
+
+    private final TransactionService transactionService;
+
+    public TransactionController(TransactionService transactionService) {
+        this.transactionService = transactionService;
+    }
+
+    @PostMapping
+    public Transaction createTransaction(@RequestBody Transaction transaction) {
+        return transactionService.saveTransaction(transaction);
+    }
+
+    @GetMapping
+    public List<Transaction> getAllTransactions() {
+        return transactionService.getAllTransactions();
+    }
+}
+//tp repo 
+package com.scb.tps.repository;
+
+import com.scb.tps.model.Transaction;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+}
+
+//tp service.java
+package com.scb.tps.service;
+
+import com.scb.tps.model.Transaction;
+import com.scb.tps.repository.TransactionRepository;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Service
+public class TransactionService {
+
+    private final TransactionRepository transactionRepository;
+
+    public TransactionService(TransactionRepository transactionRepository) {
+        this.transactionRepository = transactionRepository;
+    }
+
+    public Transaction saveTransaction(Transaction transaction) {
+        // Auto-fill approval date if not provided
+        if (transaction.getApprovalDate() == null) {
+            transaction.setApprovalDate(LocalDate.now());
+        }
+
+        Transaction saved = transactionRepository.save(transaction);
+
+        // ✅ Print transaction details in console
+        System.out.println("✅ New Transaction Created:");
+        System.out.println("ID = " + saved.getId()
+                + ", CustomerID = " + saved.getCustomerId()
+                + ", Name = " + saved.getName()
+                + ", DOB = " + saved.getDob()
+                + ", Email = " + saved.getEmail()
+                + ", Phone = " + saved.getPhone()
+                + ", Credit Score = " + saved.getCreditScore()
+                + ", Product = " + saved.getProduct()
+                + ", Validity = " + saved.getValidityPeriod()
+                + ", Credit Limit = " + saved.getCreditLimit()
+                + ", Status = " + saved.getStatus()
+                + ", Approval Date = " + saved.getApprovalDate());
+
+        return saved;
+    }
+
+    public List<Transaction> getAllTransactions() {
+        List<Transaction> transactions = transactionRepository.findAll();
+
+        // ✅ Print all transactions when fetching
+        System.out.println("📋 Fetching All Transactions:");
+        for (Transaction tx : transactions) {
+            System.out.println("ID = " + tx.getId()
+                    + ", CustomerID = " + tx.getCustomerId()
+                    + ", Name = " + tx.getName()
+                    + ", Product = " + tx.getProduct()
+                    + ", Status = " + tx.getStatus()
+                    + ", Approval Date = " + tx.getApprovalDate());
+        }
+
+        return transactions;
+    }
+}
+
+//schema.sql 
+DROP TABLE IF EXISTS transactions;
+
+CREATE TABLE transactions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    customer_id BIGINT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    dob VARCHAR(20) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    credit_score INT NOT NULL,
+    product VARCHAR(50) NOT NULL,
+    validity_period VARCHAR(50),
+    credit_limit VARCHAR(50),
+    status VARCHAR(20),
+    approval_date DATE
+);
+//data.sql
+INSERT INTO transactions (customer_id, name, dob, email, phone, credit_score, product, validity_period, credit_limit, status, approval_date)
+VALUES 
+(1001, 'Abhishek Kale', '2001-08-12', 'abhishek@example.com', '+91-9876543210', 782, 'Platinum Rewards Card', '2025-2030', '₹2,00,000', 'Approved', '2025-09-02'),
+
+(1002, 'Riya Sharma', '1998-05-21', 'riya@example.com', '+91-9988776655', 810, 'Gold Travel Card', '2025-2030', '₹1,50,000', 'Approved', '2025-09-03'),
+
+(1003, 'Arjun Mehta', '1995-02-15', 'arjun@example.com', '+91-9123456789', 650, 'Basic Cashback Card', '2025-2030', '₹75,000', 'Approved', '2025-09-01');
+
+//json body
+{
+  "customerId": 1005,
+  "name": "Karan Singh",
+  "dob": "1996-04-20",
+  "email": "karan@example.com",
+  "phone": "+91-9876112233",
+  "creditScore": 720,
+  "product": "Platinum Rewards Card",
+  "validityPeriod": "2025-2030",
+  "creditLimit": "₹1,80,000",
+  "status": "Approved"
+}
+
 
 
 
