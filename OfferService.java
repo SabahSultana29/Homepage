@@ -596,5 +596,47 @@ public class PrintShopController {
     }
 }
 
+//updated printing service 
+@Service
+public class PrintShopService {
+
+    @Autowired
+    private final PrintShop printShopRepository;
+
+    public PrintShopService(PrintShop printShopRepository) {
+        this.printShopRepository = printShopRepository;
+    }
+
+    // save request
+    public PrintShopRequest saveRequest(PrintShopRequest request) {
+        PrintShopRequest saved = printShopRepository.save(request);
+        System.out.println("✅ PrintShop Request Created: " +
+                "ID=" + saved.getId() +
+                ", AccountID=" + saved.getAccountId() +
+                ", Status=" + saved.getStatus() +
+                ", Details=" + saved.getDetails() +
+                ", RequestTime=" + saved.getRequestTime());
+        return saved;
+    }
+
+    // fetch all requests
+    public List<PrintShopRequest> getAllRequests() {
+        List<PrintShopRequest> requests = printShopRepository.findAll();
+        System.out.println("📋 All PrintShop Requests:");
+        for (PrintShopRequest req : requests) {
+            System.out.println("   -> ID=" + req.getId() +
+                    ", AccountID=" + req.getAccountId() +
+                    ", Status=" + req.getStatus() +
+                    ", Details=" + req.getDetails() +
+                    ", RequestTime=" + req.getRequestTime());
+        }
+        return requests;
+    }
+
+    public void printCard(long id) {
+        System.out.println("🖨️ Printing card for PrintShop Request ID: " + id);
+    }
+}
+
 
 
