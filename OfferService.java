@@ -491,6 +491,38 @@ public class EmailService {
     }
 }
 
+@RestController
+@RequestMapping("/api/email_logs")
+public class EmailLogController {
+
+    private final EmailLogRepository emailLogRepository;
+    private final EmailService emailService;  // ✅ inject service (not static)
+
+    // ✅ Constructor injection
+    public EmailLogController(EmailLogRepository emailLogRepository, EmailService emailService) {
+        this.emailLogRepository = emailLogRepository;
+        this.emailService = emailService;
+    }
+
+    // ✅ GET all logs
+    @GetMapping
+    public List<EmailLog> getAllLogs() {
+        return emailLogRepository.findAll();
+    }
+
+    // ✅ POST: send email with JSON body
+    @PostMapping("/send")
+    public Map<String, String> sendEmail(@RequestBody EmailRequest request) {
+        emailService.sendConfirmation(request.getCustomerId(), request.getCardNumber());  // ✅ use injected service
+
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "Email Sent Successfully");
+        response.put("customerId", String.valueOf(request.getCustomerId()));
+        response.put("cardNumber", request.getCardNumber());
+        return response;
+    }
+}
+
 
 
 
