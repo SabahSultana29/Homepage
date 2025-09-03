@@ -1131,6 +1131,32 @@ VALUES
   "status": "Approved"
 }
 
+//schema.sql
+CREATE TABLE IF NOT EXISTS transactions (
+    id BIGSERIAL PRIMARY KEY,
+    customer_id BIGINT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    dob DATE NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    credit_score INT NOT NULL,
+    product VARCHAR(100) NOT NULL,
+    validity_period VARCHAR(20) NOT NULL,
+    credit_limit VARCHAR(50) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    approval_date DATE NOT NULL
+);
+
+//data.sql
+INSERT INTO transactions 
+(customer_id, name, dob, email, phone, credit_score, product, validity_period, credit_limit, status, approval_date)
+VALUES
+(1001, 'Sabah Sultana', '2001-08-12', 'sabah@example.com', '+91-9876543210', 782, 'Platinum Credit Card', '2025-2030', '₹2,00,000', 'Approved', '2025-09-02'),
+(1002, 'Aryan Sharma', '1998-05-21', 'aryan@example.com', '+91-9988776655', 810, 'Gold Credit Card', '2025-2030', '₹1,50,000', 'Approved', '2025-09-02'),
+(1003, 'Abhishek Kale', '1995-02-15', 'abhi@example.com', '+91-9123456789', 650, 'Silver Credit Card', '2025-2030', '₹1,00,000', 'Approved', '2025-09-01');
+
+
+
 
 
 
