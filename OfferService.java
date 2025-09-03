@@ -523,6 +523,57 @@ public class EmailLogController {
     }
 }
 
+//Updated Prtintshop controller 
+@RestController
+@RequestMapping("/api/printshop")
+public class PrintshopController {
+
+    private final PrintshopService printshopService;
+
+    public PrintshopController(PrintshopService printshopService) {
+        this.printshopService = printshopService;
+    }
+
+    @PostMapping("/request")
+    public ResponseEntity<String> sendToPrintshop(@RequestBody PrintshopRequest request) {
+        printshopService.saveRequest(request);
+        return ResponseEntity.ok("Print request sent to PrintShop successfully!");
+    }
+
+    @GetMapping("/requests")
+    public List<PrintshopRequest> getAllRequests() {
+        return printshopService.getAllRequests();
+    }
+}
+
+
+//Updated offerservice
+@Service
+public class OfferService {
+
+    private final PrintshopService printshopService;
+
+    public OfferService(PrintshopService printshopService) {
+        this.printshopService = printshopService;
+    }
+
+    public void acceptOffer(String customerName, String cardNumber, String address) {
+        // business logic for accepting offer
+
+        // create a PrintshopRequest object
+        PrintshopRequest request = new PrintshopRequest();
+        request.setCustomerName(customerName);
+        request.setCardNumber(cardNumber);
+        request.setAddress(address);
+
+        // save to printshop
+        printshopService.saveRequest(request);
+
+        // later this can be extended to actually notify external print system via API
+    }
+}
+
+
 
 
 
