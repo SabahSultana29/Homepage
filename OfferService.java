@@ -573,8 +573,28 @@ public class OfferService {
     }
 }
 
+//updated printshop controller code
+@RestController
+@RequestMapping("/api/printShop")
+public class PrintShopController {
 
+    private final PrintShopService printshopService;
 
+    public PrintShopController(PrintShopService printshopService) {
+        this.printshopService = printshopService;
+    }
+
+    @PostMapping("/request")
+    public ResponseEntity<PrintShopRequest> sendToPrintShop(@RequestBody PrintShopRequest request) {
+        PrintShopRequest savedRequest = printshopService.saveRequest(request);
+        return ResponseEntity.ok(savedRequest);
+    }
+
+    @GetMapping("/requests")
+    public List<PrintShopRequest> getAllRequests() {
+        return printshopService.getAllRequests();
+    }
+}
 
 
 
