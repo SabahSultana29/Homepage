@@ -1696,3 +1696,12 @@ export default SalesApplicationsTable;
     font-weight: bold;
   }
 
+INSERT INTO transactions 
+(customer_id, name, dob, email, phone, credit_score, product, validity_period, credit_limit, status, approval_date, processed_by, application_timeline)
+VALUES
+(1001, 'Abhishek Kale', '2001-08-12', 'abhishek@example.com', '+91-9876543210', 782, 'Platinum Rewards Card', '2025-2030', '₹2,00,000', 'Approved', '2025-09-02', 'System Auto-Decision', 'Application Submitted'),
+
+(1002, 'Riya Sharma', '1998-05-21', 'riya@example.com', '+91-9988776655', 810, 'Gold Credit Card', '2025-2030', '₹1,20,000', 'Pending', '2025-09-03', 'Sales User1', 'Application Processing'),
+
+(1003, 'Arjun Mehta', '1995-02-15', 'arjun@example.com', '+91-9123456789', 650, 'Basic Cashback Card', '2025-2030', '₹60,000', 'Rejected', '2025-09-01', 'Sales User2', 'Credit Card Offered');
+
