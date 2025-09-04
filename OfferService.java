@@ -1403,7 +1403,296 @@ public class TransactionController {
     ...
 }
 
+//controller code 
 
 
 
+package com.scb.creditcardorigination.TransactionProcessingSystem.controller;
+
+import com.scb.creditcardorigination.TransactionProcessingSystem.model.Transaction;
+import com.scb.creditcardorigination.TransactionProcessingSystem.service.TransactionService;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+    @CrossOrigin(origins = "http://localhost:3000")
+    @RestController
+    @RequestMapping("/api/transactions")
+    public class TransactionController {
+        private final TransactionService transactionService;
+        public TransactionController(TransactionService transactionService) {
+            this.transactionService = transactionService;
+        }
+        @PostMapping("/create")
+        public Transaction createTransaction(@RequestBody Transaction transaction) {
+            return transactionService.saveTransaction(transaction);
+        }
+        @GetMapping("/all")
+        public List<Transaction> getAllTransactions() {
+            return transactionService.getAllTransactions();
+        }
+    }
+
+//tservice code
+package com.scb.creditcardorigination.TransactionProcessingSystem.service;
+import com.scb.creditcardorigination.TransactionProcessingSystem.model.Transaction;
+import org.springframework.stereotype.Service;
+import com.scb.creditcardorigination.TransactionProcessingSystem.repository.TransactionRepository;
+import java.time.LocalDate;
+import java.util.List;
+@Service
+public class TransactionService {
+
+    private final TransactionRepository transactionRepository;
+
+    public TransactionService(TransactionRepository transactionRepository) {
+        this.transactionRepository = transactionRepository;
+    }
+
+    public Transaction saveTransaction(Transaction transaction) {
+        // Auto-fill approval date if not provided
+        if (transaction.getApprovalDate() == null) {
+            transaction.setApprovalDate(LocalDate.now());
+        }
+        Transaction saved = transactionRepository.save(transaction);
+
+        System.out.println("New Transaction Created:");
+        System.out.println("\n ID = " + saved.getId()
+                + "\n CustomerID = " + saved.getCustomerId()
+                + "\n Name = " + saved.getName()
+                + "\n DOB = " + saved.getDob()
+                + "\n email = " + saved.getEmail()
+                + "\n  Phone = " + saved.getPhone()
+                + "\n  Credit Score = " + saved.getCreditScore()
+                + "\n  Product = " + saved.getProduct()
+                + "\n  Validity = " + saved.getValidityPeriod()
+                + "\n  Credit Limit = " + saved.getCreditLimit()
+                + "\n  Status = " + saved.getStatus()
+                + "\n Approval Date = " + saved.getApprovalDate());
+
+        return saved;
+    }
+    public List<Transaction> getAllTransactions() {
+        List<Transaction> transactions = transactionRepository.findAll();
+        System.out.println("Fetching All Transactions:");
+        for (Transaction tx : transactions) {
+            System.out.println("ID = " + tx.getId()
+                    + ", CustomerID = " + tx.getCustomerId()
+                    + ", Name = " + tx.getName()
+                    + ", Product = " + tx.getProduct()
+                    + ", Status = " + tx.getStatus()
+                    + ", Approval Date = " + tx.getApprovalDate());
+        }
+
+        return transactions;
+    }
+}
+
+//tmodal code
+package com.scb.creditcardorigination.TransactionProcessingSystem.model;
+import jakarta.persistence.*;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "transactions")
+public class Transaction {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private Long customerId;
+    private String name;
+    private String dob;
+    private String email;
+    private String phone;
+    private int creditScore;
+    private String product;
+    private String validityPeriod;
+    private String creditLimit;
+    private String status;
+    private LocalDate approvalDate;  // Auto-filled
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Long getCustomerId() { return customerId; }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getDob() { return dob; }
+    public void setDob(String dob) { this.dob = dob; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public int getCreditScore() { return creditScore; }
+    public void setCreditScore(int creditScore) { this.creditScore = creditScore; }
+
+    public String getProduct() { return product; }
+    public void setProduct(String product) { this.product = product; }
+
+    public String getValidityPeriod() { return validityPeriod; }
+    public void setValidityPeriod(String validityPeriod) { this.validityPeriod = validityPeriod; }
+
+    public String getCreditLimit() { return creditLimit; }
+    public void setCreditLimit(String creditLimit) { this.creditLimit = creditLimit; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public LocalDate getApprovalDate() { return approvalDate; }
+    public void setApprovalDate(LocalDate approvalDate) { this.approvalDate = approvalDate; }
+}
+
+//trepo
+package com.scb.creditcardorigination.TransactionProcessingSystem.repository;
+
+import com.scb.creditcardorigination.TransactionProcessingSystem.model.Transaction;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+
+}
+
+//react code 
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import "./SalesApplicationTable.css";
+
+function SalesApplicationsTable() {
+  const [applications, setApplications] = useState([]);
+
+  // fetch data from backend
+  useEffect(() => {
+    axios
+      .get("http://localhost:8080/api/transactions/all")
+      .then((response) => {
+        setApplications(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching transactions:", error);
+      });
+  }, []);
+
+  return (
+    <div className="sc-container">
+      <h2 className="sc-title">Customer Credit Card Applications</h2>
+
+      {applications.length > 0 ? (
+        <div className="sc-table-wrapper">
+          <table className="sc-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Customer Name</th>
+                <th>DOB</th>
+                <th>Email</th>
+                <th>Contact</th>
+                <th>Credit Score</th>
+                <th>Product</th>
+                <th>Status</th>
+                <th>Credit Limit</th>
+                <th>Approval Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applications.map((app) => (
+                <tr key={app.id}>
+                  <td>{app.id}</td>
+                  <td>{app.name}</td>
+                  <td>{app.dob}</td>
+                  <td>{app.email}</td>
+                  <td>{app.phone}</td>
+                  <td>{app.creditScore}</td>
+                  <td>{app.product}</td>
+                  <td className={`status ${app.status.toLowerCase()}`}>
+                    {app.status}
+                  </td>
+                  <td>{app.creditLimit}</td>
+                  <td>{app.approvalDate}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="sc-empty">No applications found.</p>
+      )}
+    </div>
+  );
+}
+
+export default SalesApplicationsTable;
+//css code
+.sc-container {
+    padding: 20px;
+    background: #f5faff;
+    min-height: 100vh;
+  }
+ 
+  .sc-title {
+    text-align: center;
+    color: #0066a1; /* Standard Chartered Blue */
+    margin-bottom: 20px;
+  }
+ 
+  .sc-loading,
+  .sc-error,
+  .sc-empty {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #0066a1;
+  }
+ 
+  .sc-error {
+    color: #d9534f;
+  }
+ 
+  .sc-table-wrapper {
+    overflow-x: auto;
+  }
+ 
+  .sc-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0px 2px 8px rgba(0, 102, 161, 0.15);
+  }
+ 
+  .sc-table th {
+    background: #0066a1; /* Blue Header */
+    color: white;
+    padding: 10px;
+    text-align: left;
+  }
+ 
+  .sc-table td {
+    padding: 10px;
+    border-bottom: 1px solid #d0e6f4;
+  }
+ 
+  .sc-table tr:nth-child(even) {
+    background: #e6f5f1; /* Light Green Row */
+  }
+ 
+  .sc-table tr:hover {
+    background: #c1e4dc; /* Highlight on Hover */
+  }
+ 
+  /* Status Colors */
+  .status.approved {
+    color: #1b8a5a; /* Green */
+    font-weight: bold;
+  }
+ 
+  .status.rejected {
+    color: #d9534f; /* Red */
+    font-weight: bold;
+  }
+ 
+  .status.pending {
+    color: #0066a1; /* Blue */
+    font-weight: bold;
+  }
 
