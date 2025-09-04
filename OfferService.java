@@ -1705,3 +1705,8 @@ VALUES
 
 (1003, 'Arjun Mehta', '1995-02-15', 'arjun@example.com', '+91-9123456789', 650, 'Basic Cashback Card', '2025-2030', '₹60,000', 'Rejected', '2025-09-01', 'Sales User2', 'Credit Card Offered');
 
+UPDATE transactions
+SET processed_by = 'System Auto-Decision',
+    application_timeline = 'Application Submitted'
+WHERE processed_by IS NULL OR application_timeline IS NULL;
+
