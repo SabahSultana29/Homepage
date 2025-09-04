@@ -2003,3 +2003,90 @@ function SalesApplicationsTable() {
  
 export default SalesApplicationsTable;
 
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import "./SalesApplicationTable.css";
+
+function SalesApplicationsTable() {
+  const [applications, setApplications] = useState([]);
+
+  // fetch data from backend
+  useEffect(() => {
+    axios
+      .get("http://localhost:8080/api/transactions/all")
+      .then((response) => {
+        setApplications(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching transactions:", error);
+      });
+  }, []);
+
+  return (
+    <div className="sc-container">
+      <h2 className="sc-title">Customer Credit Card Applications</h2>
+
+      {applications.length > 0 ? (
+        <div className="sc-table-wrapper">
+          <table className="sc-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Customer Name</th>
+                <th>DOB</th>
+                <th>Email</th>
+                <th>Contact</th>
+                <th>Credit Score</th>
+                <th>Product</th>
+                <th>Status</th>
+                <th>Credit Limit</th>
+                <th>Approval Date</th>
+                <th>Processed By</th>
+                <th>Application Timeline</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applications.map((app) => (
+                <tr key={app.id}>
+                  <td>{app.id}</td>
+                  <td>{app.name}</td>
+                  <td>{app.dob}</td>
+                  <td>{app.email}</td>
+                  <td>{app.phone}</td>
+                  <td>{app.creditScore}</td>
+                  <td>{app.product}</td>
+                  <td className={`status ${app.status.toLowerCase()}`}>
+                    {app.status}
+                  </td>
+                  <td>{app.creditLimit}</td>
+                  <td>{app.approvalDate}</td>
+                  <td>
+                    <select
+                      value={app.applicationTimeline}
+                      onChange={(e) =>
+                        handleTimelineChange(app.applicationId, e.target.value)
+                      }
+                    >
+                      {timelineStages.map((stage, index) => (
+                        <option key={index} value={stage}>
+                          {stage}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="sc-empty">No applications found.</p>
+      )}
+    </div>
+  );
+}
+
+export default SalesApplicationsTable;
+
+
+
