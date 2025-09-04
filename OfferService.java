@@ -1710,3 +1710,150 @@ SET processed_by = 'System Auto-Decision',
     application_timeline = 'Application Submitted'
 WHERE processed_by IS NULL OR application_timeline IS NULL;
 
+import React, { useState } from "react";
+import "./SalesApplicationTable.css";
+ 
+function SalesApplicationsTable() {
+  // 🔹 Fixed timeline options
+  const timelineStages = [
+    "Application Submitted",
+    "Application Processing",
+    "Credit Card Offered",
+    "Application Accepted",
+    "Printed",
+    "Shipped",
+  ];
+ 
+  // 🔹 Demo Data
+  const [applications, setApplications] = useState([
+    {
+      applicationId: "APP1001",
+      name: "Abhishek Kale",
+      dob: "2001-08-12",
+      email: "abhishek@example.com",
+      contactNumber: "+91-9876543210",
+      employmentType: "Salaried",
+      monthlyIncome: "₹75,000",
+      creditScore: 782,
+      productType: "Platinum Rewards Card",
+      status: "Approved",
+      assignedLimit: "₹2,00,000",
+      cardLast4: "5678",
+      approvalDate: "2025-09-02",
+      processedBy: "System Auto-Decision",
+      applicationTimeline: "Application Submitted",
+    },
+    {
+      applicationId: "APP1002",
+      name: "Riya Sharma",
+      dob: "1998-05-21",
+      panNumber: "RIYSH1234K",
+      email: "riya@example.com",
+      contactNumber: "+91-9988776655",
+      employmentType: "Self-Employed",
+      monthlyIncome: "₹1,20,000",
+      creditScore: 810,
+      productType: "Gold Travel Card",
+      status: "Pending",
+      assignedLimit: "-",
+      cardLast4: "-",
+      approvalDate: "-",
+      processedBy: "Underwriter01",
+      applicationTimeline: "Application Processing",
+    },
+    {
+      applicationId: "APP1003",
+      name: "Arjun Mehta",
+      dob: "1995-02-15",
+      panNumber: "ARJMH9876L",
+      email: "arjun@example.com",
+      contactNumber: "+91-9123456789",
+      employmentType: "Salaried",
+      monthlyIncome: "₹60,000",
+      creditScore: 650,
+      productType: "Basic Cashback Card",
+      status: "Rejected",
+      assignedLimit: "-",
+      cardLast4: "-",
+      approvalDate: "2025-09-01",
+      processedBy: "Underwriter02",
+      applicationTimeline: "Credit Card Offered",
+    },
+  ]);
+ 
+  // 🔹 Handle timeline change
+  const handleTimelineChange = (id, newTimeline) => {
+    setApplications((prevApps) =>
+      prevApps.map((app) =>
+        app.applicationId === id ? { ...app, applicationTimeline: newTimeline } : app
+      )
+    );
+  };
+ 
+  return (
+    <div className="sc-container">
+      <h2 className="sc-title">Customer Credit Card Applications</h2>
+ 
+      {applications.length > 0 ? (
+        <div className="sc-table-wrapper">
+          <table className="sc-table">
+            <thead>
+              <tr>
+                <th>Application ID</th>
+                <th>Customer Name</th>
+                <th>DOB</th>
+                <th>Email</th>
+                <th>Contact</th>
+                <th>Credit Score</th>
+                <th>Product</th>
+                <th>Status</th>
+                <th>Assigned Limit</th>
+                <th>Approval Date</th>
+                <th>Processed By</th>
+                <th>Application Timeline</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applications.map((app) => (
+                <tr key={app.applicationId}>
+                  <td>{app.applicationId}</td>
+                  <td>{app.name}</td>
+                  <td>{app.dob}</td>
+                  <td>{app.email}</td>
+                  <td>{app.contactNumber}</td>
+                  <td>{app.creditScore}</td>
+                  <td>{app.productType}</td>
+                  <td className={`status ${app.status.toLowerCase()}`}>
+                    {app.status}
+                  </td>
+                  <td>{app.assignedLimit}</td>
+                  <td>{app.approvalDate}</td>
+                  <td>{app.processedBy}</td>
+                  <td>
+                    <select
+                      value={app.applicationTimeline}
+                      onChange={(e) =>
+                        handleTimelineChange(app.applicationId, e.target.value)
+                      }
+                    >
+                      {timelineStages.map((stage, index) => (
+                        <option key={index} value={stage}>
+                          {stage}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="sc-empty">No applications found.</p>
+      )}
+    </div>
+  );
+}
+ 
+export default SalesApplicationsTable;
+
