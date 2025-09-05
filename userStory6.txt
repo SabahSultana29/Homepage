@@ -1,0 +1,389 @@
+//updated offerSerivie.java
+package com.scb.creditcardorigination.userStory6.service;
+
+import com.scb.creditcardorigination.userStory6.dto.AcceptOfferRequest;
+import com.scb.creditcardorigination.userStory6.dto.AcceptOfferResponse;
+import com.scb.creditcardorigination.userStory6.model.CreditCardAccount;
+import com.scb.creditcardorigination.userStory6.model.CreditCardOffer;
+import com.scb.creditcardorigination.userStory6.model.Customer;
+import com.scb.creditcardorigination.userStory6.model.PrintShopRequest;
+import com.scb.creditcardorigination.userStory6.repository.CreditCardAccountRepository;
+import com.scb.creditcardorigination.userStory6.repository.CustomerRepository;
+import com.scb.creditcardorigination.userStory6.repository.OfferRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
+import java.util.Random;
+
+@Service
+public class OfferService {
+
+    private final OfferRepository offerRepository;
+    private final CustomerRepository customerRepository;
+    private final CreditCardAccountRepository creditCardAccountRepository;
+    private final EmailService emailService;
+    private final PrintShopService printShopService;
+
+    @Autowired
+    public OfferService(OfferRepository offerRepository,
+                        CustomerRepository customerRepository,
+                        CreditCardAccountRepository creditCardAccountRepository,
+                        EmailService emailService,
+                        PrintShopService printShopService) {
+        this.offerRepository = offerRepository;
+        this.customerRepository = customerRepository;
+        this.creditCardAccountRepository = creditCardAccountRepository;
+        this.emailService = emailService;
+        this.printShopService = printShopService;
+    }
+
+    @Transactional
+    public ResponseEntity<AcceptOfferResponse> acceptOffer(AcceptOfferRequest request) {
+        // validate offer
+        Optional<CreditCardOffer> offerOpt = offerRepository.findById(request.getOfferId());
+        if (!offerOpt.isPresent()) {
+            AcceptOfferResponse resp = new AcceptOfferResponse();
+            resp.setMessage("Offer not found");
+            resp.setStatus("ERROR");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(resp);
+        }
+        CreditCardOffer offer = offerOpt.get();
+
+        // decline flow
+        if (!request.isAccepted()) {
+            offer.setStatus("DECLINED");
+            offerRepository.save(offer);
+
+            AcceptOfferResponse resp = new AcceptOfferResponse();
+            resp.setOfferId(offer.getId());
+            resp.setStatus("DECLINED");
+            resp.setMessage("Offer declined");
+            return ResponseEntity.ok(resp);
+        }
+
+        // accept flow: find or create customer
+        Customer customer = null;
+        if (request.getCustomerId() != null) {
+            customer = customerRepository.findById(request.getCustomerId()).orElse(null);
+        }
+        if (customer == null) {
+            Customer newCustomer = new Customer();
+            newCustomer.setEmail(request.getEmailId());
+            newCustomer.setName(request.getCustomerName());
+            customer = customerRepository.save(newCustomer);
+        }
+
+        // create account
+        CreditCardAccount account = new CreditCardAccount();
+        account.setCustomer(customer);
+        account.setOffer(offer);
+        account.setStatus("ACTIVE");
+        account.setAccountNumber(generateAccountNumber());
+        creditCardAccountRepository.save(account);
+
+        // update offer status
+        offer.setStatus("ACCEPTED");
+        offerRepository.save(offer);
+
+        // best-effort: send email and trigger print shop (exceptions logged, flow continues)
+        try {
+            emailService.sendConfirmation(request.getEmailId(), account.getAccountNumber());
+        } catch (Exception e) {
+            System.err.println("Email send failed: " + e.getMessage());
+        }
+
+        try {
+            PrintShopRequest printReq = new PrintShopRequest();
+            printReq.setAccountId(account.getId());
+            printReq.setCardNumber(account.getAccountNumber());
+            PrintShopRequest saved = printShopService.saveRequest(printReq);
+            printShopService.printCard(saved.getId());
+        } catch (Exception e) {
+            System.err.println("Print shop trigger failed: " + e.getMessage());
+        }
+
+        // response
+        AcceptOfferResponse resp = new AcceptOfferResponse();
+        resp.setOfferId(offer.getId());
+        resp.setAccountNumber(account.getAccountNumber());
+        resp.setStatus("ACCEPTED");
+        resp.setMessage("Offer accepted and account created");
+
+        return ResponseEntity.ok(resp);
+    }
+
+    private String generateAccountNumber() {
+        long num = 1_000_000_000L + (Math.abs(new Random().nextLong()) % 9_000_000_000L);
+        return "CC" + num;
+    }
+}
+
+//updated react code
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './CreditCardOffer.css';
+import logo from '../assets/creditcard.png';
+import free_button from '../assets/free_button.png';
+import lightning from '../assets/lightning.png';
+import gift_box from '../assets/gift_box.png';
+import phone from '../assets/phone.png';
+
+/*
+  Updated React component that calls the backend single endpoint /api/offers/accept
+  to handle both Accept and Decline flows.
+
+  Notes:
+  - The endpoint expects a JSON body like:
+    {
+      offerId: <number>,
+      customerId: <number|null>,    // optional if customer doesn't exist
+      customerName: <string|null>,  // optional
+      emailId: <string|null>,       // optional but recommended for email logging
+      accepted: <boolean>
+    }
+
+  - Replace the DEFAULT_* constants below with real values from your app (props, context, redux, etc.)
+  - The component preserves the original UI and banners. It now disables the buttons while awaiting the backend.
+*/
+
+const CreditCardOfferCustomer = ({
+  // You can pass these as props from parent or replace them with your app state
+  initialOfferId = 123,                // TODO: replace with real offer id
+  initialCustomerId = null,            // TODO: replace if you have a customer id
+  initialCustomerName = 'User Name',   // optional
+  initialEmail = 'user@example.com'    // optional
+}) => {
+  const navigate = useNavigate();
+
+  const [notification, setNotification] = useState({
+    show: false,
+    message: '',
+    type: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [serverResponse, setServerResponse] = useState(null); // store AcceptOfferResponse
+
+  // Call backend /api/offers/accept for Accept flow
+  const handleAccept = async () => {
+    setLoading(true);
+
+    const payload = {
+      offerId: initialOfferId,
+      customerId: initialCustomerId,
+      customerName: initialCustomerName,
+      emailId: initialEmail,
+      accepted: true
+    };
+
+    try {
+      const res = await fetch('/api/offers/accept', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      // If backend returned non-2xx, treat as error
+      if (!res.ok) {
+        const message = data && data.message ? data.message : 'Failed to accept offer';
+        setNotification({ show: true, message, type: 'decline-banner' });
+        setServerResponse(data);
+      } else {
+        const message = data && data.message ? data.message : 'Offer Accepted Successfully';
+        setNotification({ show: true, message, type: 'success-banner' });
+        setServerResponse(data);
+      }
+    } catch (err) {
+      setNotification({
+        show: true,
+        message: 'Network error while accepting offer',
+        type: 'decline-banner'
+      });
+      setServerResponse(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Call backend /api/offers/accept for Decline flow
+  const handleDecline = async () => {
+    setLoading(true);
+
+    const payload = {
+      offerId: initialOfferId,
+      customerId: initialCustomerId,
+      accepted: false
+    };
+
+    try {
+      const res = await fetch('/api/offers/accept', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const message = data && data.message ? data.message : 'Failed to decline offer';
+        setNotification({ show: true, message, type: 'decline-banner' });
+        setServerResponse(data);
+      } else {
+        const message = data && data.message ? data.message : 'Offer Declined Successfully';
+        setNotification({ show: true, message, type: 'decline-banner' });
+        setServerResponse(data);
+      }
+    } catch (err) {
+      setNotification({
+        show: true,
+        message: 'Network error while declining offer',
+        type: 'decline-banner'
+      });
+      setServerResponse(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Render info from serverResponse (if any) under banners
+  const renderServerDetails = () => {
+    if (!serverResponse) return null;
+    return (
+      <div className="server-details">
+        {serverResponse.offerId !== undefined && <div>Offer ID: {serverResponse.offerId}</div>}
+        {serverResponse.accountNumber && <div>Account #: {serverResponse.accountNumber}</div>}
+        {serverResponse.status && <div>Status: {serverResponse.status}</div>}
+      </div>
+    );
+  };
+
+  return (
+    <div className="offer-container">
+      <div className="offer-card">
+        <div className="header">
+          <h1 className="congratulations">Congratulations!</h1>
+          <p className="subtitle">
+            User, here is your <span className="highlight">lifetime-free</span> Standard Chartered<br />
+            Credit Card offer
+          </p>
+        </div>
+
+        <div className="content">
+          <div className="card-section">
+            <div className="credit-card-image">
+              <img
+                src={logo}
+                alt="Standard Chartered Platinum Credit Card"
+                className="card-img"
+              />
+            </div>
+          </div>
+
+          <div className="details-section">
+            <div className="credit-limit">
+              <h2>Credit Limit</h2>
+              <div className="amount">₹1,50,000</div>
+              <p className="availability">Available immediately upon approval</p>
+            </div>
+
+            <div className="interest-rate">
+              <h3>Interest Rate </h3>
+              <div className="rates">
+                <div className="rate-item">
+                  <span className="rate-label">Starting 2.49% p.m.</span>
+                  <span className="rate-value">2.75%</span>
+                  <span className="rate-desc">per month</span>
+                  <small>*Interest charged only on outstanding balance</small>
+                </div>
+                <div className="rate-item special">
+                  <span className="rate-label">Special Offer</span>
+                  <span className="rate-value">33.00%</span>
+                  <span className="rate-desc">per annum</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="features">
+              <div className="feature-item">
+                <img src={free_button} className="feature-icon" alt="lifetime free" />
+                <span>Lifetime free</span>
+              </div>
+              <div className="feature-item">
+                <img src={lightning} className="feature-icon" alt="instant approval" />
+                <span>Instant Approval</span>
+              </div>
+              <div className="feature-item">
+                <img src={gift_box} className="feature-icon" alt="rewards" />
+                <span>Reward Points</span>
+              </div>
+              <div className="feature-item">
+                <img src={phone} className="feature-icon" alt="contactless" />
+                <span>Contactless Pay</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {notification.show && notification.type === 'success-banner' && (
+          <>
+            <div className="success-banner">
+              <h3 className="success-banner-title">{notification.message}</h3>
+              {renderServerDetails()}
+            </div>
+            <div className="success-banner-actions">
+              <button
+                className="success-banner-button"
+                onClick={() => navigate('/home')}
+              >
+                Go Back to Home
+              </button>
+            </div>
+          </>
+        )}
+
+        {notification.show && notification.type === 'decline-banner' && (
+          <>
+            <div className="decline-banner">
+              <h3 className="decline-banner-title">{notification.message}</h3>
+              {renderServerDetails()}
+            </div>
+            <div className="decline-banner-actions">
+              <button
+                className="decline-banner-button"
+                onClick={() => navigate('/home')}
+              >
+                Go Back to Home
+              </button>
+            </div>
+          </>
+        )}
+
+        {!(notification.show && (notification.type === 'success-banner' || notification.type === 'decline-banner')) && (
+          <div className="actions">
+            <button
+              className="accept-btn"
+              onClick={handleAccept}
+              disabled={loading}
+            >
+              {loading ? 'Processing...' : 'Accept'}
+            </button>
+            <button
+              className="decline-btn"
+              onClick={handleDecline}
+              disabled={loading}
+            >
+              {loading ? 'Processing...' : 'Decline'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default CreditCardOfferCustomer;
