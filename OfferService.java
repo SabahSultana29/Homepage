@@ -2799,3 +2799,92 @@ public class TransactionController {
     }
 }
 
+//tp service 
+package com.scb.creditcardorigination.TransactionProcessingSystem.service;
+
+import com.scb.creditcardorigination.TransactionProcessingSystem.model.Transaction;
+import com.scb.creditcardorigination.TransactionProcessingSystem.repository.TransactionRepository;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Service
+public class TransactionService {
+
+    private final TransactionRepository transactionRepository;
+
+    public TransactionService(TransactionRepository transactionRepository) {
+        this.transactionRepository = transactionRepository;
+    }
+
+    public Transaction saveTransaction(Transaction transaction) {
+        // Auto-fill approval date if not provided
+        if (transaction.getApprovalDate() == null) {
+            transaction.setApprovalDate(LocalDate.now());
+        }
+
+        if (transaction.getProcessedBy() == null) {
+            transaction.setProcessedBy("System Auto Decision");
+        }
+
+        if (transaction.getApplicationTimeLine() == null) {
+            transaction.setApplicationTimeLine("Application Submitted");
+        }
+
+        Transaction saved = transactionRepository.save(transaction);
+
+        System.out.println("New Transaction Created:");
+        System.out.println("\n ID = " + saved.getId()
+                + "\n CustomerID = " + saved.getCustomerId()
+                + "\n Name = " + saved.getName()
+                + "\n DOB = " + saved.getDob()
+                + "\n Email = " + saved.getEmail()
+                + "\n Phone = " + saved.getPhone()
+                + "\n Credit Score = " + saved.getCreditScore()
+                + "\n Product = " + saved.getProduct()
+                + "\n Validity = " + saved.getValidityPeriod()
+                + "\n Credit Limit = " + saved.getCreditLimit()
+                + "\n Status = " + saved.getStatus()
+                + "\n Approval Date = " + saved.getApprovalDate()
+                + "\n Processed By = " + saved.getProcessedBy()
+                + "\n Application Timeline = " + saved.getApplicationTimeLine());
+
+        return saved;
+    }
+
+    public List<Transaction> getAllTransactions() {
+        List<Transaction> transactions = transactionRepository.findAll();
+        System.out.println("Fetching All Transactions:");
+        for (Transaction tx : transactions) {
+            System.out.println("ID = " + tx.getId()
+                    + ", CustomerID = " + tx.getCustomerId()
+                    + ", Name = " + tx.getName()
+                    + ", Product = " + tx.getProduct()
+                    + ", Status = " + tx.getStatus()
+                    + ", Approval Date = " + tx.getApprovalDate()
+                    + ", Processed By = " + tx.getProcessedBy()
+                    + ", Application Timeline = " + tx.getApplicationTimeLine());
+        }
+
+        return transactions;
+    }
+
+    // 🔹 New method: update timeline in DB
+    public Transaction updateTimeline(Long id, String newTimeline) {
+        Transaction tx = transactionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transaction not found with id: " + id));
+
+        tx.setApplicationTimeLine(newTimeline);
+
+        Transaction updated = transactionRepository.save(tx);
+
+        System.out.println("Timeline Updated:");
+        System.out.println("ID = " + updated.getId()
+                + ", Name = " + updated.getName()
+                + ", New Timeline = " + updated.getApplicationTimeLine());
+
+        return updated;
+    }
+}
+
