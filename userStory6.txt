@@ -1486,6 +1486,68 @@ Do you want me to also prepare a **collection file (.json)** that you can direct
   "cardNumber": "4111111111111111"
 }
 
+package com.scb.creditcardorigination.userStory6.service;
+
+import com.scb.creditcardorigination.userStory6.dto.AcceptOfferResponse;
+import com.scb.creditcardorigination.userStory6.dto.OfferAcceptanceRequest;
+import com.scb.creditcardorigination.userStory6.dto.EmailRequest;
+import com.scb.creditcardorigination.userStory6.model.Customer;
+import com.scb.creditcardorigination.userStory6.model.PrintShopRequest;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+@Service
+public class OfferOrchestrationService {
+
+    private final OfferService offerService;
+    private final CustomerService customerService;
+    private final EmailService emailService;
+    private final PrintShopService printShopService;
+
+    public OfferOrchestrationService(
+            OfferService offerService,
+            CustomerService customerService,
+            EmailService emailService,
+            PrintShopService printShopService
+    ) {
+        this.offerService = offerService;
+        this.customerService = customerService;
+        this.emailService = emailService;
+        this.printShopService = printShopService;
+    }
+
+    public ResponseEntity<AcceptOfferResponse> processOfferAcceptance(OfferAcceptanceRequest request) {
+        // Step 1: Create/Save customer
+        Customer customer = new Customer();
+        customer.setName(request.getCustomerName());
+        customer.setEmail(request.getEmail());     // ✅ Correct field
+        customer.setPhone(request.getPhone());     // ✅ Don’t forget phone
+        ResponseEntity<Customer> savedCustomer = customerService.saveCustomer(customer);
+
+        // Step 2: Accept the offer
+        ResponseEntity<AcceptOfferResponse> offerResponse = offerService.acceptOffer(request);
+
+        // Step 3: Send confirmation email
+        EmailRequest emailRequest = new EmailRequest();
+        emailRequest.setEmailId(request.getEmail());     // ✅ use request.getEmail()
+        emailRequest.setCardNumber(request.getCardNumber());
+        emailService.sendConfirmation(emailRequest.getEmailId(), emailRequest.getCardNumber());
+
+        // Step 4: Send request to Print Shop
+        PrintShopRequest psr = new PrintShopRequest();
+        psr.setCustomerId(savedCustomer.getBody().getId());
+        psr.setCardNumber(request.getCardNumber());
+        printShopService.saveRequest(psr);
+
+        return offerResponse;
+    }
+
+    public ResponseEntity<String> processOfferDecline(Long offerId) {
+        // Let OfferService handle decline
+        return offerService.declineOffer(offerId);
+    }
+}
+
 
 
 
