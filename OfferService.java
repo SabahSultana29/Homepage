@@ -2318,3 +2318,298 @@ function SalesApplicationsTable() {
 
 export default SalesApplicationsTable;
 
+//tp controller code
+package com.scb.creditcardorigination.TransactionProcessingSystem.controller;
+
+import com.scb.creditcardorigination.TransactionProcessingSystem.model.Transaction;
+import com.scb.creditcardorigination.TransactionProcessingSystem.service.TransactionService;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+    @CrossOrigin(origins = "http://localhost:3000")
+    @RestController
+    @RequestMapping("/api/transactions")
+    public class TransactionController {
+        private final TransactionService transactionService;
+        public TransactionController(TransactionService transactionService) {
+            this.transactionService = transactionService;
+        }
+        @PostMapping("/create")
+        public Transaction createTransaction(@RequestBody Transaction transaction) {
+            return transactionService.saveTransaction(transaction);
+        }
+        @GetMapping("/all")
+        public List<Transaction> getAllTransactions() {
+            return transactionService.getAllTransactions();
+        }
+        @PutMapping("/{id}/timeline")
+        public Transaction updateTimeline(@PathVariable Long id , @RequestBody Map<String, String> , request){
+            String newTimeline = request.get("applicationTimeline");
+            return transactionService.updateTimeline(id , newTimeline);
+        }
+    }
+
+//tp service code
+
+package com.scb.creditcardorigination.TransactionProcessingSystem.service;
+import com.scb.creditcardorigination.TransactionProcessingSystem.model.Transaction;
+import org.springframework.stereotype.Service;
+import com.scb.creditcardorigination.TransactionProcessingSystem.repository.TransactionRepository;
+import java.time.LocalDate;
+import java.util.List;
+@Service
+public class TransactionService {
+
+    private final TransactionRepository transactionRepository;
+    public TransactionService(TransactionRepository transactionRepository) {
+        this.transactionRepository = transactionRepository;
+    }
+
+    public Transaction saveTransaction(Transaction transaction) {
+        // Auto-fill approval date if not provided
+        if (transaction.getApprovalDate() == null) {
+            transaction.setApprovalDate(LocalDate.now());
+        }
+
+        if(transaction.getProcessedBy() == null ){
+            transaction.setProcessedBy("System Auto Decision");
+        }
+
+        if(transaction.getApplicationTimeLine() ==null ){
+            transaction.setApplicationTimeLine("Application Submitted");
+        }
+
+
+        Transaction saved = transactionRepository.save(transaction);
+
+        System.out.println("New Transaction Created:");
+        System.out.println("\n ID = " + saved.getId()
+                + "\n CustomerID = " + saved.getCustomerId()
+                + "\n Name = " + saved.getName()
+                + "\n DOB = " + saved.getDob()
+                + "\n email = " + saved.getEmail()
+                + "\n  Phone = " + saved.getPhone()
+                + "\n  Credit Score = " + saved.getCreditScore()
+                + "\n  Product = " + saved.getProduct()
+                + "\n  Validity = " + saved.getValidityPeriod()
+                + "\n  Credit Limit = " + saved.getCreditLimit()
+                + "\n  Status = " + saved.getStatus()
+                + "\n Approval Date = " + saved.getApprovalDate()
+                + "\n Processed by = " + saved.getProcessedBy()
+                +  "\n Application Timeline= " + saved.getApplicationTimeLine());
+
+
+        return saved;
+    }
+    public List<Transaction> getAllTransactions() {
+        List<Transaction> transactions = transactionRepository.findAll();
+        System.out.println("Fetching All Transactions:");
+        for (Transaction tx : transactions) {
+            System.out.println("ID = " + tx.getId()
+                    + ", CustomerID = " + tx.getCustomerId()
+                    + ", Name = " + tx.getName()
+                    + ", Product = " + tx.getProduct()
+                    + ", Status = " + tx.getStatus()
+                    + ", Approval Date = " + tx.getApprovalDate()
+                    + "Processed by = " + tx.getProcessedBy()
+                    +  "Application Timeline= " + tx.getApplicationTimeLine());
+        }
+
+        return transactions;
+    }
+}
+
+//tp modal
+package com.scb.creditcardorigination.TransactionProcessingSystem.model;
+import jakarta.persistence.*;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "transactions")
+public class Transaction {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private Long customerId;
+    private String name;
+    private String dob;
+    private String email;
+    private String phone;
+    private int creditScore;
+    private String product;
+    private String validityPeriod;
+    private String creditLimit;
+    private String status;
+    private LocalDate approvalDate;  // Auto-filled
+    private  String processedBy;
+    private  String applicationTimeLine;
+
+    public String getProcessedBy() {
+        return processedBy;
+    }
+
+    public void setProcessedBy(String processedBy) {
+        this.processedBy = processedBy;
+    }
+
+    public String getApplicationTimeLine() {
+        return applicationTimeLine;
+    }
+
+    public void setApplicationTimeLine(String applicationTimeLine) {
+        this.applicationTimeLine = applicationTimeLine;
+    }
+
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Long getCustomerId() { return customerId; }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getDob() { return dob; }
+    public void setDob(String dob) { this.dob = dob; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public int getCreditScore() { return creditScore; }
+    public void setCreditScore(int creditScore) { this.creditScore = creditScore; }
+
+    public String getProduct() { return product; }
+    public void setProduct(String product) { this.product = product; }
+
+    public String getValidityPeriod() { return validityPeriod; }
+    public void setValidityPeriod(String validityPeriod) { this.validityPeriod = validityPeriod; }
+
+    public String getCreditLimit() { return creditLimit; }
+    public void setCreditLimit(String creditLimit) { this.creditLimit = creditLimit; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public LocalDate getApprovalDate() { return approvalDate; }
+    public void setApprovalDate(LocalDate approvalDate) { this.approvalDate = approvalDate; }
+}
+
+//react code 
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import "./SalesApplicationTable.css";
+
+function SalesApplicationsTable() {
+  const [applications, setApplications] = useState([]);
+
+  // 🔹 Fixed timeline options
+  const timelineStages = [
+    "Application Submitted",
+    "Application Processing",
+    "Credit Card Offered",
+    "Application Accepted",
+    "Printed",
+    "Shipped",
+  ];
+
+  // 🔹 Fetch data from backend
+  useEffect(() => {
+    axios
+      .get("http://localhost:8080/api/transactions/all")
+      .then((response) => {
+        setApplications(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching transactions:", error);
+      });
+  }, []);
+
+  // 🔹 Handle timeline change (frontend only for now)
+  const handleTimelineChange = (id, newTimeline) => {
+    setApplications((prevApps) =>
+      prevApps.map((app) =>
+        app.id === id ? { ...app, applicationTimeline: newTimeline } : app
+      )
+    );
+
+    // (Optional) Send update to backend when timeline changes
+    axios
+      .put(`http://localhost:8080/api/transactions/${id}/timeline`, {
+        applicationTimeline: newTimeline,
+      })
+      .catch((error) => {
+        console.error("Error updating timeline:", error);
+      });
+  };
+
+  return (
+    <div className="sc-container">
+      <h2 className="sc-title">Customer Credit Card Applications</h2>
+
+      {applications.length > 0 ? (
+        <div className="sc-table-wrapper">
+          <table className="sc-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Customer Name</th>
+                <th>DOB</th>
+                <th>Email</th>
+                <th>Contact</th>
+                <th>Credit Score</th>
+                <th>Product</th>
+                <th>Status</th>
+                <th>Credit Limit</th>
+                <th>Approval Date</th>
+                <th>Processed By</th>
+                <th>Application Timeline</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applications.map((app) => (
+                <tr key={app.id}>
+                  <td>{app.id}</td>
+                  <td>{app.name}</td>
+                  <td>{app.dob}</td>
+                  <td>{app.email}</td>
+                  <td>{app.phone}</td>
+                  <td>{app.creditScore}</td>
+                  <td>{app.product}</td>
+                  <td className={`status ${app.status?.toLowerCase()}`}>
+                    {app.status}
+                  </td>
+                  <td>{app.creditLimit}</td>
+                  <td>{app.approvalDate}</td>
+                  <td>{app.processedBy}</td>
+                  <td>
+                    <select
+                      value={app.applicationTimeline || "Application Submitted"}
+                      onChange={(e) =>
+                        handleTimelineChange(app.id, e.target.value)
+                      }
+                    >
+                      {timelineStages.map((stage, index) => (
+                        <option key={index} value={stage}>
+                          {stage}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="sc-empty">No applications found.</p>
+      )}
+    </div>
+  );
+}
+
+export default SalesApplicationsTable;
+
+
