@@ -2757,3 +2757,45 @@ function SalesApplicationsTable() {
 
 export default SalesApplicationsTable;
 
+
+//tp controller code
+package com.scb.creditcardorigination.TransactionProcessingSystem.controller;
+
+import com.scb.creditcardorigination.TransactionProcessingSystem.model.Transaction;
+import com.scb.creditcardorigination.TransactionProcessingSystem.service.TransactionService;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+@CrossOrigin(origins = "http://localhost:3000")
+@RestController
+@RequestMapping("/api/transactions")
+public class TransactionController {
+
+    private final TransactionService transactionService;
+
+    public TransactionController(TransactionService transactionService) {
+        this.transactionService = transactionService;
+    }
+
+    // Create a new transaction (called when a new application is submitted)
+    @PostMapping("/create")
+    public Transaction createTransaction(@RequestBody Transaction transaction) {
+        return transactionService.saveTransaction(transaction);
+    }
+
+    // Get all transactions (for displaying in table)
+    @GetMapping("/all")
+    public List<Transaction> getAllTransactions() {
+        return transactionService.getAllTransactions();
+    }
+
+    // Update application timeline (called when sales user changes dropdown)
+    @PutMapping("/{id}/timeline")
+    public Transaction updateTimeline(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        String newTimeline = request.get("applicationTimeline");
+        return transactionService.updateTimeline(id, newTimeline);
+    }
+}
+
