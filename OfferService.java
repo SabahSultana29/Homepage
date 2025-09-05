@@ -3668,6 +3668,303 @@ const CreditCardOfferCustomer = () => {
 
 export default CreditCardOfferCustomer;
 
+//Offer controller code
+package com.scb.creditcardorigination.userStory6.controller;
+import com.scb.creditcardorigination.userStory6.dto.AcceptOfferRequest;
+import com.scb.creditcardorigination.userStory6.dto.AcceptOfferResponse;
+import com.scb.creditcardorigination.userStory6.model.CreditCardOffer;
+import com.scb.creditcardorigination.userStory6.service.OfferService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/offers")
+public class OfferController {
+    private final OfferService offerService;
+    public OfferController(OfferService offerService){
+        this.offerService = offerService;
+    }
+
+ //api : accept credit card offer
+@PostMapping("/accept")
+    public ResponseEntity<AcceptOfferResponse> acceptOffer(@RequestBody AcceptOfferRequest request){
+        return offerService.acceptOffer(request);
+}
+@GetMapping
+    public List<CreditCardOffer> getAllOffers(){
+        return offerService.getAllOffers();
+}
+
+
+}
+
+//email log controller 
+package com.scb.creditcardorigination.userStory6.controller;
+import com.scb.creditcardorigination.userStory6.dto.EmailRequest;
+import com.scb.creditcardorigination.userStory6.model.EmailLog;
+import com.scb.creditcardorigination.userStory6.repository.EmailLogRepository;
+import com.scb.creditcardorigination.userStory6.service.EmailService;
+import org.springframework.web.bind.annotation.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/email_logs")
+public class EmailLogController {
+    private final EmailLogRepository emailLogRepository;
+    private final EmailService emailService;
+    public EmailLogController(EmailLogRepository emailLogRepository, EmailService emailService) {
+        this.emailLogRepository = emailLogRepository;
+        this.emailService = emailService;
+    }
+    // GET all logs
+    @GetMapping
+    public List<EmailLog> getAllLogs() {
+        return emailLogRepository.findAll();
+    }
+
+    @PostMapping("/send")
+    public Map<String, String> sendEmail(@RequestBody EmailRequest request) {
+        emailService.sendConfirmation(request.getEmailId(), request.getCardNumber());
+
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "Email Sent Successfully");
+        response.put("EmailId", String.valueOf(request.getEmailId()));
+        response.put("cardNumber", request.getCardNumber());
+        return response;
+    }
+}
+
+//customer controller 
+package com.scb.creditcardorigination.userStory6.controller;
+import com.scb.creditcardorigination.userStory6.model.Customer;
+import com.scb.creditcardorigination.userStory6.service.CustomerService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+@RestController
+@RequestMapping("/api/customers")
+public class CustomerController {
+    private final CustomerService customerService;
+
+    public CustomerController(CustomerService customerService) {
+        this.customerService = customerService;
+    }
+    //api : get customer by id
+@GetMapping("/{id}")
+    public ResponseEntity<Customer>getCustomerById(@PathVariable long id){
+       Customer customer = customerService.getCustomerById(id);
+       if(customer == null){
+           return
+                   ResponseEntity.notFound().build();
+       }
+       return ResponseEntity.ok(customer);
+}
+
+//api : create new customer
+   @PostMapping
+   public ResponseEntity<Customer>
+   createCustomer(@RequestBody Customer customer){
+        return
+           customerService.saveCustomer(customer);
+   }
+
+}
+//printshop controller
+package com.scb.creditcardorigination.userStory6.controller;
+import com.scb.creditcardorigination.userStory6.model.PrintShopRequest;
+import com.scb.creditcardorigination.userStory6.service.PrintShopService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/printShop")
+public class PrintShopController {
+
+    private final PrintShopService printshopService;
+
+    public PrintShopController(PrintShopService printshopService) {
+        this.printshopService = printshopService;
+    }
+
+    @PostMapping("/request")
+    public ResponseEntity<PrintShopRequest> sendToPrintShop(@RequestBody PrintShopRequest request) {
+        PrintShopRequest savedRequest = printshopService.saveRequest(request);
+        return ResponseEntity.ok(savedRequest);
+    }
+
+    @GetMapping("/requests")
+    public List<PrintShopRequest> getAllRequests() {
+        return printshopService.getAllRequests();
+    }
+    @PostMapping("/print/{id}")
+    public  String printCard(@PathVariable long id){
+        printshopService.printCard(id);
+        return "Print job started for PrintShop Request ID:" + id;
+    }
+}
+//react code 
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './CreditCardOffer.css';
+import logo from '../assets/creditcard.png';
+import free_button from '../assets/free_button.png';
+import lightning from '../assets/lightning.png';
+import gift_box from '../assets/gift_box.png';
+import phone from '../assets/phone.png';
+
+const CreditCardOfferCustomer = () => {
+  const navigate = useNavigate();
+  const [notification, setNotification] = useState({
+    show: false,
+    message: '',
+    type: ''
+  });
+
+  const handleAccept = () => {
+    setNotification({
+      show: true,
+      message: 'Offer Accepted Successfully',
+      type: 'success-banner'
+    });
+  };
+
+  const handleDecline = () => {
+    setNotification({
+      show: true,
+      message: 'Offer Declined Successfully',
+      type: 'decline-banner'
+    });
+  };
+
+  return (
+    <div className="offer-container">
+      <div className="offer-card">
+        <div className="header">
+          <h1 className="congratulations">Congratulations!</h1>
+          <p className="subtitle">
+            User, here is your <span className="highlight">lifetime-free</span> Standard Chartered<br />
+            Credit Card offer
+          </p>
+        </div>
+ 
+        <div className="content">
+          <div className="card-section">
+            <div className="credit-card-image">
+            <img
+              src={logo}
+              alt="Standard Chartered Platinum Credit Card"
+              className="card-img"
+             
+            />
+            </div>
+          </div>
+ 
+          <div className="details-section">
+            <div className="credit-limit">
+              <h2>Credit Limit</h2>
+              <div className="amount">₹1,50,000</div>
+              <p className="availability">Available immediately upon approval</p>
+            </div>
+
+            <div className="interest-rate">
+              <h3>Interest Rate </h3>
+              <div className="rates">
+                <div className="rate-item">
+                  <span className="rate-label">Starting 2.49% p.m.</span>
+                  <span className="rate-value">2.75%</span>
+                  <span className="rate-desc">per month</span>
+                  <small>*Interest charged only on outstanding balance</small>
+                </div>
+                <div className="rate-item special">
+                  <span className="rate-label">Special Offer</span>
+                  <span className="rate-value">33.00%</span>
+                  <span className="rate-desc">per annum</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="features">
+              <div className="feature-item">
+                <img src={free_button} className="feature-icon" />
+                <span>Lifetime free</span>
+              </div>
+              <div className="feature-item">
+              <img src={lightning} className="feature-icon" />
+                <span>Instant Approval</span>
+              </div>
+              <div className="feature-item">
+              <img src={gift_box} className="feature-icon" />
+                <span>Reward Points</span>
+              </div>
+              <div className="feature-item">
+              <img src={phone} className="feature-icon" />
+                <span>Contactless Pay</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {notification.show && notification.type === 'success-banner' && (
+          <>
+            <div className="success-banner">
+              <h3 className="success-banner-title">{notification.message}</h3>
+            </div>
+            <div className="success-banner-actions">
+              <button 
+                className="success-banner-button"
+                onClick={() => navigate('/home')}
+              >
+                Go Back to Home
+              </button>
+            </div>
+          </>
+        )}
+
+        {notification.show && notification.type === 'decline-banner' && (
+          <>
+            <div className="decline-banner">
+              <h3 className="decline-banner-title">{notification.message}</h3>
+            </div>
+            <div className="decline-banner-actions">
+              <button 
+                className="decline-banner-button"
+                onClick={() => navigate('/home')}
+              >
+                Go Back to Home
+              </button>
+            </div>
+          </>
+        )}
+
+        {!(notification.show && (notification.type === 'success-banner' || notification.type === 'decline-banner')) && (
+          <div className="actions">
+            <button 
+              className="accept-btn" 
+              onClick={handleAccept}
+            >
+              Accept
+            </button>
+            <button 
+              className="decline-btn" 
+              onClick={handleDecline}
+              disabled={notification.show}
+            >
+              Decline
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default CreditCardOfferCustomer;
+
+
+
 
 
 
