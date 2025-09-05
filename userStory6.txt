@@ -1475,6 +1475,17 @@ Open **pgAdmin** and check tables:
 Do you want me to also prepare a **collection file (.json)** that you can directly import into Postman with all your APIs pre-configured?
 
 
+{
+  "offerId": 1,
+  "offerName": "Platinum Card",
+  "description": "Premium Benefits",
+  "annualFee": 4999,
+  "customerName": "Aryan",
+  "email": "aryan@example.com",
+  "phone": "9876543210",
+  "cardNumber": "4111111111111111"
+}
+
 
 
 
