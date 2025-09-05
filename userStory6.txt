@@ -730,6 +730,342 @@ public class EmailRequest {
     }
 }
 
+Perfect 👍 — let’s consolidate everything so you have **clean working code** for your orchestration, controller, and React side.
+
+I’ll give you the **full updated versions** of:
+
+1. `OfferAcceptanceRequest` DTO (new)
+2. `OfferOrchestrationService`
+3. `OfferController`
+4. React frontend page (single page integration)
+
+---
+
+## 1️⃣ New DTO → `OfferAcceptanceRequest.java`
+
+```java
+package com.scb.creditcardorigination.userStory6.dto;
+
+public class OfferAcceptanceRequest {
+    private long offerId;
+    private String offerName;
+    private String description;
+    private double annualFee;
+
+    private String customerName;
+    private String email;
+    private String phone;
+
+    private String cardNumber;
+
+    public long getOfferId() {
+        return offerId;
+    }
+
+    public void setOfferId(long offerId) {
+        this.offerId = offerId;
+    }
+
+    public String getOfferName() {
+        return offerName;
+    }
+
+    public void setOfferName(String offerName) {
+        this.offerName = offerName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public double getAnnualFee() {
+        return annualFee;
+    }
+
+    public void setAnnualFee(double annualFee) {
+        this.annualFee = annualFee;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getCardNumber() {
+        return cardNumber;
+    }
+
+    public void setCardNumber(String cardNumber) {
+        this.cardNumber = cardNumber;
+    }
+}
+```
+
+---
+
+## 2️⃣ Updated `OfferOrchestrationService.java`
+
+```java
+package com.scb.creditcardorigination.userStory6.service;
+
+import com.scb.creditcardorigination.userStory6.dto.AcceptOfferRequest;
+import com.scb.creditcardorigination.userStory6.dto.AcceptOfferResponse;
+import com.scb.creditcardorigination.userStory6.dto.EmailRequest;
+import com.scb.creditcardorigination.userStory6.dto.OfferAcceptanceRequest;
+import com.scb.creditcardorigination.userStory6.model.CreditCardAccount;
+import com.scb.creditcardorigination.userStory6.model.Customer;
+import com.scb.creditcardorigination.userStory6.model.PrintShopRequest;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+
+@Service
+public class OfferOrchestrationService {
+
+    private final OfferService offerService;
+    private final CustomerService customerService;
+    private final EmailService emailService;
+    private final PrintShopService printShopService;
+
+    public OfferOrchestrationService(
+            OfferService offerService,
+            CustomerService customerService,
+            EmailService emailService,
+            PrintShopService printShopService
+    ) {
+        this.offerService = offerService;
+        this.customerService = customerService;
+        this.emailService = emailService;
+        this.printShopService = printShopService;
+    }
+
+    public ResponseEntity<AcceptOfferResponse> processOfferAcceptance(OfferAcceptanceRequest request) {
+        // Step 1: Save Customer
+        Customer customer = new Customer();
+        customer.setName(request.getCustomerName());
+        customer.setEmail(request.getEmail());
+        customer.setPhone(request.getPhone());
+        ResponseEntity<Customer> savedCustomer = customerService.saveCustomer(customer);
+
+        // Step 2: Call OfferService
+        AcceptOfferRequest offerRequest = new AcceptOfferRequest(
+                request.getOfferId(),
+                request.getOfferName(),
+                request.getDescription(),
+                request.getAnnualFee()
+        );
+        ResponseEntity<AcceptOfferResponse> offerResponse = offerService.acceptOffer(offerRequest);
+
+        // Step 3: Create CreditCardAccount
+        CreditCardAccount account = new CreditCardAccount();
+        account.setCardNumber(request.getCardNumber());
+        account.setEmailId(request.getEmail());
+        account.setCustomer(savedCustomer.getBody());
+        account.setCreatedAt(LocalDateTime.now());
+        // 👉 Save account if you have a CreditCardAccountRepository
+
+        // Step 4: Send Email
+        EmailRequest emailRequest = new EmailRequest();
+        emailRequest.setEmailId(request.getEmail());
+        emailRequest.setCardNumber(request.getCardNumber());
+        emailService.sendConfirmation(emailRequest.getEmailId(), emailRequest.getCardNumber());
+
+        // Step 5: PrintShop Request
+        PrintShopRequest psr = new PrintShopRequest();
+        psr.setAccountId(account.getId());
+        psr.setStatus("PENDING");
+        psr.setDetails("Print card for customer: " + request.getCustomerName());
+        psr.setRequestTime(LocalDateTime.now());
+        printShopService.saveRequest(psr);
+
+        return offerResponse;
+    }
+
+    public ResponseEntity<String> processOfferDecline(Long offerId) {
+        return offerService.declineOffer(offerId);
+    }
+}
+```
+
+---
+
+## 3️⃣ Updated `OfferController.java`
+
+```java
+package com.scb.creditcardorigination.userStory6.controller;
+
+import com.scb.creditcardorigination.userStory6.dto.AcceptOfferResponse;
+import com.scb.creditcardorigination.userStory6.dto.OfferAcceptanceRequest;
+import com.scb.creditcardorigination.userStory6.service.OfferOrchestrationService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/offers")
+public class OfferController {
+
+    private final OfferOrchestrationService orchestrationService;
+
+    public OfferController(OfferOrchestrationService orchestrationService) {
+        this.orchestrationService = orchestrationService;
+    }
+
+    @PostMapping("/accept")
+    public ResponseEntity<AcceptOfferResponse> acceptOffer(@RequestBody OfferAcceptanceRequest request) {
+        return orchestrationService.processOfferAcceptance(request);
+    }
+
+    @PostMapping("/decline/{offerId}")
+    public ResponseEntity<String> declineOffer(@PathVariable Long offerId) {
+        return orchestrationService.processOfferDecline(offerId);
+    }
+}
+```
+
+---
+
+## 4️⃣ React Code (Single Page → `CreditCardOfferCustomer.js`)
+
+```jsx
+import React, { useState } from "react";
+import axios from "axios";
+
+export default function CreditCardOfferCustomer() {
+  const [offer, setOffer] = useState({
+    offerId: "",
+    offerName: "",
+    description: "",
+    annualFee: ""
+  });
+
+  const [customer, setCustomer] = useState({
+    customerName: "",
+    email: "",
+    phone: ""
+  });
+
+  const [cardNumber, setCardNumber] = useState("");
+
+  const handleAccept = async () => {
+    const requestData = {
+      offerId: offer.offerId,
+      offerName: offer.offerName,
+      description: offer.description,
+      annualFee: offer.annualFee,
+      customerName: customer.customerName,
+      email: customer.email,
+      phone: customer.phone,
+      cardNumber: cardNumber
+    };
+
+    try {
+      const response = await axios.post("http://localhost:8080/api/offers/accept", requestData);
+      alert("Offer Accepted: " + response.data.message);
+    } catch (error) {
+      console.error(error);
+      alert("Error accepting offer");
+    }
+  };
+
+  return (
+    <div>
+      <h2>Accept Credit Card Offer</h2>
+      <input
+        type="text"
+        placeholder="Offer ID"
+        value={offer.offerId}
+        onChange={(e) => setOffer({ ...offer, offerId: e.target.value })}
+      />
+      <input
+        type="text"
+        placeholder="Offer Name"
+        value={offer.offerName}
+        onChange={(e) => setOffer({ ...offer, offerName: e.target.value })}
+      />
+      <input
+        type="text"
+        placeholder="Description"
+        value={offer.description}
+        onChange={(e) => setOffer({ ...offer, description: e.target.value })}
+      />
+      <input
+        type="number"
+        placeholder="Annual Fee"
+        value={offer.annualFee}
+        onChange={(e) => setOffer({ ...offer, annualFee: e.target.value })}
+      />
+      <br />
+
+      <h3>Customer Info</h3>
+      <input
+        type="text"
+        placeholder="Customer Name"
+        value={customer.customerName}
+        onChange={(e) => setCustomer({ ...customer, customerName: e.target.value })}
+      />
+      <input
+        type="email"
+        placeholder="Email"
+        value={customer.email}
+        onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
+      />
+      <input
+        type="text"
+        placeholder="Phone"
+        value={customer.phone}
+        onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
+      />
+      <input
+        type="text"
+        placeholder="Card Number"
+        value={cardNumber}
+        onChange={(e) => setCardNumber(e.target.value)}
+      />
+      <br />
+      <button onClick={handleAccept}>Accept Offer</button>
+    </div>
+  );
+}
+```
+
+---
+
+### ✅ Summary
+
+* No need to touch your existing **models**.
+* We only added **1 new DTO** (`OfferAcceptanceRequest`) to combine customer + offer + card data.
+* `OfferOrchestrationService` now works cleanly with your models.
+* `OfferController` exposes `/api/offers/accept` and `/api/offers/decline/{id}`.
+* React frontend posts all necessary data in one request.
+
+---
+
+Do you also want me to add the **CreditCardAccountRepository** so your new `CreditCardAccount` actually gets persisted instead of just being created in memory?
+
 
 
 
