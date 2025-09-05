@@ -273,3 +273,340 @@ All 4 services get triggered properly 🎉
 ---
 
 Do you also want me to show you how to **test this end-to-end** with Postman (for both Accept & Decline) before wiring React?
+
+//credit card aacount
+package com.scb.creditcardorigination.userStory6.model;
+import jakarta.persistence.*;
+
+import java.nio.channels.AcceptPendingException;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "credit_card_accounts")
+public class CreditCardAccount {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+    private  String emailId;
+    private String cardNumber;
+    private LocalDateTime createdAt;
+
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+    @ManyToOne
+    @JoinColumn(name = "offer_id")
+    private CreditCardOffer offer;
+
+    public CreditCardAccount() {
+    }
+
+    public CreditCardAccount(String cardNumber, LocalDateTime createdAt, Customer customer, CreditCardOffer offer) {
+        this.cardNumber = cardNumber;
+        this.createdAt = createdAt;
+        this.customer = customer;
+        this.offer = offer;
+    }
+
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getCardNumber() {
+        return cardNumber;
+    }
+
+    public void setCardNumber(String cardNumber) {
+        this.cardNumber = cardNumber;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+
+    public CreditCardOffer getOffer() {
+        return offer;
+    }
+
+    public void setOffer(CreditCardOffer offer) {
+        this.offer = offer;
+    }
+
+    public void setStatus(String active) {
+    }
+
+    public void setCreditLimit(LocalDateTime creditLimit) {
+    }
+
+    public void setEmailId(String emailId) {
+        this.emailId = emailId;
+    }
+
+    public String getEmailId() {
+        return  emailId;
+    }
+}
+//credit card oofer
+package com.scb.creditcardorigination.userStory6.model;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
+
+@Entity
+@Table(name = "credit_card_offers")
+public class CreditCardOffer {
+    public long getOffer_id() {
+        return offer_id;
+    }
+
+    public void setOffer_id(long offer_id) {
+        this.offer_id = offer_id;
+    }
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long offer_id;
+    private String offer_name;
+    private String description;
+    private double annual_fee;
+
+    public String getOffer_name() {
+        return offer_name;
+    }
+    public void setOffer_name(String offer_name) {
+        this.offer_name = offer_name;
+    }
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public double getAnnual_fee() {
+        return annual_fee;
+    }
+    public void setAnnual_fee(double annual_fee) {
+        this.annual_fee = annual_fee;
+    }
+    public CreditCardOffer(){}
+
+    public LocalDateTime getCreditLimit() {
+
+        return null;
+    }
+    public String getCardNumber() {
+        return null;
+    }
+
+
+    public void setStatus(String accepted) {
+    }
+}
+//customer.java
+package com.scb.creditcardorigination.userStory6.model;
+import jakarta.persistence.*;
+@Entity
+@Table(name = "customers")
+public class Customer {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private  long id;
+    private String name;
+    private String email;
+    private String phone;
+    public Customer(){}
+
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public Customer(String name, String email, String phone) {
+
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+    }
+}
+
+//email log.java
+package com.scb.creditcardorigination.userStory6.model;
+
+import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "email_log")
+public class EmailLog {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+   private String emailId;
+
+    private String cardNumber;
+    @Column(length = 1000)
+    private String message;
+
+    private LocalDateTime sentAt;
+    public EmailLog() {}
+
+    public EmailLog(String emailId, String cardNumber, String message, LocalDateTime sentAt) {
+        this.emailId = emailId;
+        this.cardNumber = cardNumber;
+        this.message = message;
+        this.sentAt = sentAt;
+    }
+
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getEmailId() {
+        return emailId;
+    }
+
+    public void setEmailId(String emailId) {
+        this.emailId = emailId;
+    }
+
+    public String getCardNumber() {
+        return cardNumber;
+    }
+
+    public void setCardNumber(String cardNumber) {
+        this.cardNumber = cardNumber;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public LocalDateTime getSentAt() {
+        return sentAt;
+    }
+
+    public void setSentAt(LocalDateTime sentAt) {
+        this.sentAt = sentAt;
+    }
+
+    @Override
+    public String toString() {
+        return "EmailLog{" +
+                "id=" + id +
+                ", EmailId=" + emailId +
+                ", cardNumber='" + cardNumber + '\'' +
+                ", message='" + message + '\'' +
+                ", sentAt=" + sentAt +
+                '}';
+    }
+}
+
+//printshop.java
+package com.scb.creditcardorigination.userStory6.model;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "printingShop_requests")
+public class PrintShopRequest {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+    private Long accountId;
+    private  String status;
+    private String details;
+    private LocalDateTime requestTime;
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public long getAccountId() {
+        return accountId;
+    }
+
+    public void setAccountId(long accountId) {
+        this.accountId = accountId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+    public  void setDetails(String details){
+        this.details = details;
+    }
+    public  void setRequestTime(LocalDateTime requestTime){
+        this.requestTime = requestTime;
+    }
+
+    public String getDetails() {
+        return details;
+    }
+
+    public LocalDateTime getRequestTime() {
+        return requestTime;
+    }
+}
+
