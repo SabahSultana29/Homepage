@@ -1813,5 +1813,88 @@ VALUES
 
 (1003, 'Sabah Sultana', '1995-02-15', 'saba@example.com', '+91-9123456789', 650, 'Basic Cashback Card', '2025-2030', '₹60,000', 'Rejected', '2025-09-01', 'Sales User2', 'Credit Card Offered');
 
+package com.scb.creditcardorigination.userStory6.service;
+
+import com.scb.creditcardorigination.userStory6.dto.AcceptOfferResponse;
+import com.scb.creditcardorigination.userStory6.dto.OfferAcceptanceRequest;
+import com.scb.creditcardorigination.userStory6.dto.EmailRequest;
+import com.scb.creditcardorigination.userStory6.model.Customer;
+import com.scb.creditcardorigination.userStory6.model.CreditCardAccount;
+import com.scb.creditcardorigination.userStory6.model.CreditCardOffer;
+import com.scb.creditcardorigination.userStory6.model.PrintShopRequest;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Service
+public class OfferOrchestrationService {
+
+    private final OfferService offerService;
+    private final CustomerService customerService;
+    private final EmailService emailService;
+    private final PrintShopService printShopService;
+    private final CreditCardAccountService accountService;
+
+    public OfferOrchestrationService(
+            OfferService offerService,
+            CustomerService customerService,
+            EmailService emailService,
+            PrintShopService printShopService,
+            CreditCardAccountService accountService
+    ) {
+        this.offerService = offerService;
+        this.customerService = customerService;
+        this.emailService = emailService;
+        this.printShopService = printShopService;
+        this.accountService = accountService;
+    }
+
+    public ResponseEntity<AcceptOfferResponse> processOfferAcceptance(OfferAcceptanceRequest request) {
+        // Step 1: Save customer
+        Customer customer = new Customer();
+        customer.setName(request.getCustomerName());
+        customer.setEmail(request.getEmail());
+        customer.setPhone(request.getPhone());
+        ResponseEntity<Customer> savedCustomer = customerService.saveCustomer(customer);
+
+        // Step 2: Accept offer (update offer status, etc.)
+        ResponseEntity<AcceptOfferResponse> offerResponse = offerService.acceptOffer(request);
+
+        // Step 3: Create Credit Card Account
+        CreditCardAccount account = new CreditCardAccount();
+        account.setCustomer(savedCustomer.getBody());
+        account.setOffer(new CreditCardOffer()); // minimal mapping
+        account.getOffer().setOffer_id(request.getOfferId());
+        account.setCardNumber(request.getCardNumber() != null ?
+                request.getCardNumber() :
+                UUID.randomUUID().toString().substring(0, 16)); // fallback card number
+        account.setEmailId(request.getEmail());
+        account.setCreatedAt(LocalDateTime.now());
+        accountService.saveAccount(account);
+
+        // Step 4: Log Email
+        EmailRequest emailRequest = new EmailRequest();
+        emailRequest.setEmailId(request.getEmail());
+        emailRequest.setCardNumber(account.getCardNumber());
+        emailService.sendConfirmation(emailRequest.getEmailId(), emailRequest.getCardNumber());
+
+        // Step 5: Send request to Print Shop
+        PrintShopRequest psr = new PrintShopRequest();
+        psr.setAccountId(savedCustomer.getBody().getId()); // ⚠ because schema links to customers
+        psr.setStatus("PENDING");
+        psr.setDetails("Card printing for customer " + savedCustomer.getBody().getName());
+        psr.setRequestTime(LocalDateTime.now());
+        printShopService.saveRequest(psr);
+
+        return offerResponse;
+    }
+
+    public ResponseEntity<String> processOfferDecline(Long offerId) {
+        return offerService.declineOffer(offerId);
+    }
+}
+
 
 
