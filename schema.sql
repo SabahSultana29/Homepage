@@ -3,13 +3,12 @@ DROP TABLE IF EXISTS credit_card_accounts CASCADE;
 DROP TABLE IF EXISTS credit_card_offers CASCADE;
 DROP TABLE IF EXISTS customers CASCADE;
 DROP TABLE IF EXISTS email_log CASCADE;
-DROP TABLE IF EXISTS printingshop_requests CASCADE;
+DROP TABLE IF EXISTS printingShop_requests CASCADE;
 
 -- Customers table
 CREATE TABLE customers (
     customer_id SERIAL PRIMARY KEY,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
+    name VARCHAR(50) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     phone VARCHAR(15)
 );
@@ -18,8 +17,8 @@ CREATE TABLE customers (
 CREATE TABLE credit_card_offers (
     offer_id SERIAL PRIMARY KEY,
     offer_name VARCHAR(100) NOT NULL,
-    discount_percent DECIMAL(5,2),
-    valid_until DATE
+    description TEXT,
+    annual_fee DECIMAL(10,2)
 );
 
 -- Credit Card Accounts table
@@ -36,21 +35,42 @@ CREATE TABLE credit_card_accounts (
 
 -- Email Log table
 CREATE TABLE email_log (
-    email_id SERIAL PRIMARY KEY,
-    customer_id INT NOT NULL,
-    subject VARCHAR(150),
-    body TEXT,
-    CONSTRAINT fk_email_customer FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+    id SERIAL PRIMARY KEY,
+    customer_id INTEGER ,
+    card_number VARCHAR(65),
+    message TEXT,
+    sent_at TIMESTAMP
+
 );
 
 -- Printing Shop Requests table
-CREATE TABLE printingshop_requests (
-    request_id SERIAL PRIMARY KEY,
-    customer_id INT NOT NULL,
-    document_name VARCHAR(100),
-    pages INT,
-    status VARCHAR(20),
-    CONSTRAINT fk_request_customer FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+CREATE TABLE printingShop_requests (
+   id BIGSERIAL PRIMARY KEY ,
+   account_id BIGINT NOT NULL,
+   status VARCHAR(50) NOT NULL,
+   details VARCHAR(1000),
+   request_time TIMESTAMP NOT NULL ,
+   CONSTRAINT fk_request_customer FOREIGN KEY (account_id)
+   REFERENCES customers(customer_id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 );
 
 
+--Transaction Table
+CREATE TABLE IF NOT EXISTS transactions (
+    id BIGSERIAL PRIMARY KEY,
+    customer_id BIGINT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    dob DATE NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    credit_score INT NOT NULL,
+    product VARCHAR(100) NOT NULL,
+    validity_period VARCHAR(20) NOT NULL,
+    credit_limit VARCHAR(50) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    approval_date DATE NOT NULL,
+    processed_by VARCHAR(100),
+    application_timeline VARCHAR(100)
+);
