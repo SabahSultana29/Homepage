@@ -1896,5 +1896,16 @@ public class OfferOrchestrationService {
     }
 }
 
+{
+  "offerId": 1,
+  "offerName": "Festival Offer",
+  "description": "Enjoy festival discounts on all purchases",
+  "annualFee": 499.99,
+  "customerName": "New Customer",
+  "email": "newcustomer@example.com",
+  "phone": "9998887776",
+  "cardNumber": "4444333322221111"
+}
+
 
 
