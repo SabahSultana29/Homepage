@@ -1548,6 +1548,86 @@ public class OfferOrchestrationService {
     }
 }
 
+//offerservice code
+package com.scb.creditcardorigination.userStory6.service;
+
+import com.scb.creditcardorigination.userStory6.dto.AcceptOfferResponse;
+import com.scb.creditcardorigination.userStory6.dto.OfferAcceptanceRequest;
+import com.scb.creditcardorigination.userStory6.model.CreditCardAccount;
+import com.scb.creditcardorigination.userStory6.model.CreditCardOffer;
+import com.scb.creditcardorigination.userStory6.repository.CreditCardAccountRepository;
+import com.scb.creditcardorigination.userStory6.repository.OfferRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class OfferService {
+
+    private final OfferRepository offerRepository;
+    private final CreditCardAccountRepository accountRepository;
+
+    public OfferService(OfferRepository offerRepository,
+                        CreditCardAccountRepository accountRepository) {
+        this.offerRepository = offerRepository;
+        this.accountRepository = accountRepository;
+    }
+
+    // Fetch all offers
+    public List<CreditCardOffer> getAllOffers() {
+        return offerRepository.findAll();
+    }
+
+    // Accept offer
+    public ResponseEntity<AcceptOfferResponse> acceptOffer(OfferAcceptanceRequest request) {
+        Optional<CreditCardOffer> offerOpt = offerRepository.findById(request.getOfferId());
+
+        if (offerOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new AcceptOfferResponse(false, "Offer not found", null));
+        }
+
+        CreditCardOffer offer = offerOpt.get();
+
+        // Create credit card account
+        CreditCardAccount account = new CreditCardAccount();
+        account.setCardNumber(request.getCardNumber());
+        account.setEmailId(request.getEmail()); // ✅ from DTO
+        account.setCreatedAt(LocalDateTime.now());
+        account.setOffer(offer);
+
+        accountRepository.save(account);
+
+        AcceptOfferResponse response = new AcceptOfferResponse(
+                true,
+                "Offer accepted successfully",
+                account.getCardNumber()
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    // Decline offer
+    public ResponseEntity<String> declineOffer(Long offerId) {
+        Optional<CreditCardOffer> offerOpt = offerRepository.findById(offerId);
+
+        if (offerOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Offer not found");
+        }
+
+        CreditCardOffer offer = offerOpt.get();
+        offer.setStatus("Declined");  // even if your model doesn’t persist this, good for future
+
+        offerRepository.save(offer);
+
+        return ResponseEntity.ok("Offer declined successfully");
+    }
+}
+
 
 
 
