@@ -1276,3 +1276,73 @@ public ResponseEntity<String> declineOffer(Long offerId) {
 }
 
 
+Perfect question 👍
+
+Since you now have a `declineOffer(Long offerId)` method in your **OfferService**, it is exposed in your **OfferController** (through `OfferOrchestrationService → OfferService`).
+Assuming your controller looks like this:
+
+```java
+@PutMapping("/offers/{offerId}/decline")
+public ResponseEntity<String> declineOffer(@PathVariable Long offerId) {
+    return offerOrchestrationService.processOfferDecline(offerId);
+}
+```
+
+---
+
+### ✅ How to test in **Postman / cURL**
+
+Since this is a `PUT` request with only a path variable, you **don’t need to send JSON in the body**.
+
+#### Example Request (Postman)
+
+* Method: `PUT`
+
+* URL:
+
+  ```
+  http://localhost:8080/api/offers/1/decline
+  ```
+
+  (replace `1` with the offer ID you want to decline)
+
+* Body: **none required**
+
+#### Example Response (success)
+
+```json
+"Offer with ID 1 declined successfully"
+```
+
+#### Example Response (not found)
+
+```json
+"Offer with ID 99 not found"
+```
+
+---
+
+### ✅ If you want to test with JSON body instead
+
+You’d need to **change your controller** to accept `@RequestBody` instead of `@PathVariable`. Example:
+
+```java
+@PutMapping("/offers/decline")
+public ResponseEntity<String> declineOffer(@RequestBody Map<String, Long> payload) {
+    Long offerId = payload.get("offerId");
+    return offerOrchestrationService.processOfferDecline(offerId);
+}
+```
+
+Then you can test with JSON:
+
+```json
+{
+  "offerId": 1
+}
+```
+
+
+
+
+
