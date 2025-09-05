@@ -1262,4 +1262,17 @@ const CreditCardOfferCustomer = () => {
 export default CreditCardOfferCustomer;
 
 
+public ResponseEntity<String> declineOffer(Long offerId) {
+    // Just check if offer exists
+    if (!offerRepository.existsById(offerId)) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                             .body("Offer with ID " + offerId + " not found");
+    }
+
+    // For now, you can either delete it OR simply acknowledge decline
+    // offerRepository.deleteById(offerId);
+
+    return ResponseEntity.ok("Offer with ID " + offerId + " declined successfully");
+}
+
 
