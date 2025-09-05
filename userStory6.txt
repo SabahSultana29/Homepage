@@ -1373,6 +1373,107 @@ public class OfferController {
         return orchestrationService.processOfferDecline(offerId);
     }
 
+Great question 🙌 let me show you step-by-step how you can **test your backend APIs in Postman**:
+
+---
+
+## 🔹 Step 1: Open Postman
+
+* Launch Postman.
+* Make sure your backend is running (`localhost:8080` or whatever port you’re using).
+
+---
+
+## 🔹 Step 2: Test **Accept Offer API**
+
+1. Click **New → HTTP Request**.
+2. Select **POST**.
+3. Enter URL:
+
+   ```
+   http://localhost:8080/api/offers/accept
+   ```
+4. Go to the **Body** tab → select **raw** → choose **JSON**.
+5. Paste this sample JSON:
+
+   ```json
+   {
+     "customerName": "John Doe",
+     "emailId": "john.doe@example.com",
+     "offerId": 1,
+     "cardNumber": "4111111111111111"
+   }
+   ```
+6. Click **Send**.
+
+✅ If everything is wired correctly, you’ll get a response like:
+
+```json
+{
+  "status": "Success",
+  "message": "Offer accepted successfully",
+  "cardNumber": "4111111111111111"
+}
+```
+
+---
+
+## 🔹 Step 3: Test **Decline Offer API**
+
+1. Create a new request in Postman.
+2. Select **POST**.
+3. Enter URL:
+
+   ```
+   http://localhost:8080/api/offers/decline/1
+   ```
+
+   (replace `1` with an existing `offerId`).
+4. No body is required.
+5. Click **Send**.
+
+✅ You should get:
+
+```json
+{
+  "message": "Offer with ID 1 declined successfully"
+}
+```
+
+---
+
+## 🔹 Step 4: Verify Database Updates
+
+Open **pgAdmin** and check tables:
+
+* `customers` → should show `"John Doe"`
+* `credit_card_accounts` → new account with `cardNumber`
+* `email_log` → entry with `"Email sent successfully"`
+* `printingShop_requests` → print request record
+
+---
+
+## 🔹 Step 5: Test Other Controllers (Optional)
+
+* **Email Logs**:
+
+  ```
+  GET http://localhost:8080/api/email_logs
+  ```
+* **Print Shop Requests**:
+
+  ```
+  GET http://localhost:8080/api/printShop/requests
+  ```
+
+---
+
+✨ That’s it! With just these steps in Postman, you can fully test the **accept** and **decline** flow, and then verify results in **pgAdmin**.
+
+---
+
+Do you want me to also prepare a **collection file (.json)** that you can directly import into Postman with all your APIs pre-configured?
+
 
 
 
