@@ -2888,3 +2888,634 @@ public class TransactionService {
     }
 }
 
+//customer controller 
+package com.scb.creditcardorigination.userStory6.controller;
+
+
+import com.scb.creditcardorigination.userStory6.model.Customer;
+import com.scb.creditcardorigination.userStory6.service.CustomerService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/customers")
+public class CustomerController {
+    private final CustomerService customerService;
+
+    public CustomerController(CustomerService customerService) {
+        this.customerService = customerService;
+    }
+    //api : get customer by id
+@GetMapping("/{id}")
+    public ResponseEntity<Customer>getCustomerById(@PathVariable long id){
+       Customer customer = customerService.getCustomerById(id);
+       if(customer == null){
+           return
+                   ResponseEntity.notFound().build();
+       }
+       return ResponseEntity.ok(customer);
+}
+
+//api : create new customer
+   @PostMapping
+   public ResponseEntity<Customer>
+   createCustomer(@RequestBody Customer customer){
+        return
+           customerService.saveCustomer(customer);
+   }
+
+}
+
+//customer service 
+package com.scb.creditcardorigination.userStory6.service;
+import com.scb.creditcardorigination.userStory6.model.Customer;
+import com.scb.creditcardorigination.userStory6.repository.CustomerRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+@Service
+public class CustomerService {
+    private final CustomerRepository customerRepository;
+    public CustomerService(CustomerRepository customerRepository) {
+        this.customerRepository = customerRepository;
+    }
+
+    public Customer getCustomerById(long id) {
+       return
+               customerRepository.findById(id).orElse(null);
+
+    }
+
+
+    public ResponseEntity<Customer> saveCustomer(Customer customer) {
+        Customer savedCustomer = customerRepository.save(customer);
+        return new ResponseEntity<>(savedCustomer, HttpStatus.CREATED);
+    }
+}
+//email log controller
+package com.scb.creditcardorigination.userStory6.controller;
+import com.scb.creditcardorigination.userStory6.dto.EmailRequest;
+import com.scb.creditcardorigination.userStory6.model.EmailLog;
+import com.scb.creditcardorigination.userStory6.repository.EmailLogRepository;
+import com.scb.creditcardorigination.userStory6.service.EmailService;
+import org.springframework.web.bind.annotation.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/email_logs")
+public class EmailLogController {
+    private final EmailLogRepository emailLogRepository;
+    private final EmailService emailService;
+    public EmailLogController(EmailLogRepository emailLogRepository, EmailService emailService) {
+        this.emailLogRepository = emailLogRepository;
+        this.emailService = emailService;
+    }
+    // GET all logs
+    @GetMapping
+    public List<EmailLog> getAllLogs() {
+        return emailLogRepository.findAll();
+    }
+   // send email with JSON body
+    @PostMapping("/send")
+    public Map<String, String> sendEmail(@RequestBody EmailRequest request) {
+        emailService.sendConfirmation(request.getEmailId(), request.getCardNumber());
+
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "Email Sent Successfully");
+        response.put("EmailId", String.valueOf(request.getEmailId()));
+        response.put("cardNumber", request.getCardNumber());
+        return response;
+    }
+}
+
+//email request 
+package com.scb.creditcardorigination.userStory6.dto;
+
+public class EmailRequest {
+    private String emailId;
+    private String cardNumber;
+
+    public EmailRequest() {
+    }
+
+    public String getEmailId() {
+        return emailId;
+    }
+
+    public void setEmailId(String emailId) {
+        this.emailId = emailId;
+    }
+
+    public String getCardNumber() {
+        return cardNumber;
+    }
+
+    public void setCardNumber(String cardNumber) {
+        this.cardNumber = cardNumber;
+    }
+}
+
+
+
+package com.scb.creditcardorigination.userStory6.service;
+import com.scb.creditcardorigination.userStory6.model.EmailLog;
+import com.scb.creditcardorigination.userStory6.repository.EmailLogRepository;
+import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
+@Service
+public class EmailService {
+    private final EmailLogRepository emailLogRepository;
+    public EmailService(EmailLogRepository emailLogRepository) {
+        this.emailLogRepository = emailLogRepository;
+    }
+    public void sendConfirmation(String emailId, String cardNumber) {
+        // Save email log entry
+        EmailLog emailLog = new EmailLog();
+        emailLog.setEmailId(emailId);
+        emailLog.setCardNumber(cardNumber);
+        // Add subject + body
+        String subject = "Credit Card Creation Confirmation";
+        String body = "Dear Customer,\n\nYour credit card with number " + cardNumber +
+                " has been created successfully.\n\nThank you for choosing our services.\n\nRegards,\nSCB Team";
+
+        emailLog.setMessage("Subject: " + subject + "\n\nBody:\n" + body);
+        emailLog.setSentAt(LocalDateTime.now());
+        emailLogRepository.save(emailLog);
+        // Print formatted email in console
+        System.out.println("===== EMAIL SENT =====");
+        System.out.println("To : " + emailId);
+        System.out.println("Card Number: " + cardNumber);
+        System.out.println("Subject: " + subject);
+        System.out.println("Body:\n" + body);
+    }
+
+}
+
+//printshop controller 
+package com.scb.creditcardorigination.userStory6.controller;
+
+import com.scb.creditcardorigination.userStory6.model.PrintShopRequest;
+import com.scb.creditcardorigination.userStory6.service.PrintShopService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/printShop")
+public class PrintShopController {
+
+    private final PrintShopService printshopService;
+
+    public PrintShopController(PrintShopService printshopService) {
+        this.printshopService = printshopService;
+    }
+
+    @PostMapping("/request")
+    public ResponseEntity<PrintShopRequest> sendToPrintShop(@RequestBody PrintShopRequest request) {
+        PrintShopRequest savedRequest = printshopService.saveRequest(request);
+        return ResponseEntity.ok(savedRequest);
+    }
+
+    @GetMapping("/requests")
+    public List<PrintShopRequest> getAllRequests() {
+        return printshopService.getAllRequests();
+    }
+    @PostMapping("/print/{id}")
+    public  String printCard(@PathVariable long id){
+        printshopService.printCard(id);
+        return "Print job started for PrintShop Request ID:" + id;
+    }
+}
+
+//printshop service
+package com.scb.creditcardorigination.userStory6.service;
+
+import com.scb.creditcardorigination.userStory6.repository.PrintShop;
+import com.scb.creditcardorigination.userStory6.model.PrintShopRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+@Service
+public class PrintShopService {
+
+    private final PrintShop printShopRepository;
+
+    // 🔹 Define a formatter for requestTime
+    private static final DateTimeFormatter FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    @Autowired
+    public PrintShopService(PrintShop printShopRepository) {
+        this.printShopRepository = printShopRepository;
+    }
+
+    // save request
+    public PrintShopRequest saveRequest(PrintShopRequest request) {
+
+        // 🔹 Auto-set requestTime if not provided
+        if (request.getRequestTime() == null) {
+            request.setRequestTime(LocalDateTime.now());
+        }
+
+        // 🔹 Auto-update accountId if not provided (increment latest one)
+        if (request.getAccountId() == 0) {
+            Long maxId = printShopRepository.findAll()
+                    .stream()
+                    .mapToLong(PrintShopRequest::getAccountId)
+                    .max()
+                    .orElse(1000L); // default start
+            request.setAccountId(maxId + 1);
+        }
+
+        PrintShopRequest saved = printShopRepository.save(request);
+
+        System.out.println("PrintShop Request Created:");
+        System.out.println("AccountID: " + saved.getAccountId());
+        System.out.println("RequestTime: " + saved.getRequestTime().format(FORMATTER));
+        System.out.println("Status=" + saved.getStatus());
+        System.out.println("Details=" + saved.getDetails());
+
+        return saved;
+    }
+
+    // fetch all requests
+    public List<PrintShopRequest> getAllRequests() {
+        List<PrintShopRequest> requests = printShopRepository.findAll();
+        System.out.println(" All PrintShop Requests:");
+        for (PrintShopRequest req : requests) {
+            System.out.println("----------------------------");
+            System.out.println("ID=" + req.getId());
+            System.out.println("AccountID: " + req.getAccountId());
+            System.out.println("RequestTime: " +
+                    (req.getRequestTime() != null ? req.getRequestTime().format(FORMATTER) : "N/A"));
+            System.out.println("Status=" + req.getStatus());
+            System.out.println("Details=" + req.getDetails());
+        }
+        return requests;
+    }
+
+    // print card
+    public void printCard(long id) {
+        PrintShopRequest req = printShopRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found with ID: " + id));
+
+        System.out.println("Printing card for PrintShop Request:");
+        System.out.println("ID=" + req.getId());
+        System.out.println("AccountID: " + req.getAccountId());
+        System.out.println("RequestTime: " +
+                (req.getRequestTime() != null ? req.getRequestTime().format(FORMATTER) : "N/A"));
+        System.out.println("Status=" + req.getStatus());
+        System.out.println("Details=" + req.getDetails());
+    }
+}
+
+//printshop request.java
+package com.scb.creditcardorigination.userStory6.model;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "printingShop_requests")
+public class PrintShopRequest {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+    private Long accountId;
+    private  String status;
+    private String details;
+    private LocalDateTime requestTime;
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public long getAccountId() {
+        return accountId;
+    }
+
+    public void setAccountId(long accountId) {
+        this.accountId = accountId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+    public  void setDetails(String details){
+        this.details = details;
+    }
+    public  void setRequestTime(LocalDateTime requestTime){
+        this.requestTime = requestTime;
+    }
+
+    public String getDetails() {
+        return details;
+    }
+
+    public LocalDateTime getRequestTime() {
+        return requestTime;
+    }
+}
+//credit card account.java
+package com.scb.creditcardorigination.userStory6.model;
+import jakarta.persistence.*;
+
+import java.nio.channels.AcceptPendingException;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "credit_card_accounts")
+public class CreditCardAccount {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+    private  String emailId;
+    private String cardNumber;
+    private LocalDateTime createdAt;
+
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+    @ManyToOne
+    @JoinColumn(name = "offer_id")
+    private CreditCardOffer offer;
+
+    public CreditCardAccount() {
+    }
+
+    public CreditCardAccount(String cardNumber, LocalDateTime createdAt, Customer customer, CreditCardOffer offer) {
+        this.cardNumber = cardNumber;
+        this.createdAt = createdAt;
+        this.customer = customer;
+        this.offer = offer;
+    }
+
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getCardNumber() {
+        return cardNumber;
+    }
+
+    public void setCardNumber(String cardNumber) {
+        this.cardNumber = cardNumber;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+
+    public CreditCardOffer getOffer() {
+        return offer;
+    }
+
+    public void setOffer(CreditCardOffer offer) {
+        this.offer = offer;
+    }
+
+    public void setStatus(String active) {
+    }
+
+    public void setCreditLimit(LocalDateTime creditLimit) {
+    }
+
+    public void setEmailId(String emailId) {
+        this.emailId = emailId;
+    }
+
+    public String getEmailId() {
+        return  emailId;
+    }
+}
+//credit card offer.java
+package com.scb.creditcardorigination.userStory6.model;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
+
+@Entity
+@Table(name = "credit_card_offers")
+public class CreditCardOffer {
+    public long getOffer_id() {
+        return offer_id;
+    }
+
+    public void setOffer_id(long offer_id) {
+        this.offer_id = offer_id;
+    }
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long offer_id;
+    private String offer_name;
+    private String description;
+    private double annual_fee;
+
+    public String getOffer_name() {
+        return offer_name;
+    }
+    public void setOffer_name(String offer_name) {
+        this.offer_name = offer_name;
+    }
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public double getAnnual_fee() {
+        return annual_fee;
+    }
+    public void setAnnual_fee(double annual_fee) {
+        this.annual_fee = annual_fee;
+    }
+    public CreditCardOffer(){}
+
+    public LocalDateTime getCreditLimit() {
+
+        return null;
+    }
+    public String getCardNumber() {
+        return null;
+    }
+
+
+    public void setStatus(String accepted) {
+    }
+}
+//accept offer request dto
+package com.scb.creditcardorigination.userStory6.dto;
+
+public class AcceptOfferRequest {
+    private long offer_id;
+    private String offer_name;
+    private String description;
+    private double annual_fee;
+
+    public AcceptOfferRequest(long offer_id, String offer_name, String description, double annual_fee) {
+        this.offer_id = offer_id;
+        this.offer_name = offer_name;
+        this.description = description;
+        this.annual_fee = annual_fee;
+    }
+
+    public long getOffer_id() {
+        return offer_id;
+    }
+
+    public void setOffer_id(long offer_id) {
+        this.offer_id = offer_id;
+    }
+
+    public String getOffer_name() {
+        return offer_name;
+    }
+
+    public void setOffer_name(String offer_name) {
+        this.offer_name = offer_name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public double getAnnual_fee() {
+        return annual_fee;
+    }
+
+    public void setAnnual_fee(double annual_fee) {
+        this.annual_fee = annual_fee;
+    }
+
+    public Long getOfferId() {
+        return offer_id;
+    }
+
+}
+
+//accept offer response.java
+package com.scb.creditcardorigination.userStory6.dto;
+
+
+public class AcceptOfferResponse {
+    private String status;
+    private String message;
+    private String cardNumber;
+
+    public AcceptOfferResponse(boolean b, String message, String cardNumber) {
+        this.status = b ? "Success" : "Failure";
+        this.message = message;
+        this.cardNumber = cardNumber;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getCardNumber() {
+        return cardNumber;
+    }
+
+    public void setCardNumber(String cardNumber) {
+        this.cardNumber = cardNumber;
+    }
+}
+
+//email log controller 
+package com.scb.creditcardorigination.userStory6.controller;
+import com.scb.creditcardorigination.userStory6.dto.EmailRequest;
+import com.scb.creditcardorigination.userStory6.model.EmailLog;
+import com.scb.creditcardorigination.userStory6.repository.EmailLogRepository;
+import com.scb.creditcardorigination.userStory6.service.EmailService;
+import org.springframework.web.bind.annotation.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/email_logs")
+public class EmailLogController {
+    private final EmailLogRepository emailLogRepository;
+    private final EmailService emailService;
+    public EmailLogController(EmailLogRepository emailLogRepository, EmailService emailService) {
+        this.emailLogRepository = emailLogRepository;
+        this.emailService = emailService;
+    }
+    // GET all logs
+    @GetMapping
+    public List<EmailLog> getAllLogs() {
+        return emailLogRepository.findAll();
+    }
+   // send email with JSON body
+    @PostMapping("/send")
+    public Map<String, String> sendEmail(@RequestBody EmailRequest request) {
+        emailService.sendConfirmation(request.getEmailId(), request.getCardNumber());
+
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "Email Sent Successfully");
+        response.put("EmailId", String.valueOf(request.getEmailId()));
+        response.put("cardNumber", request.getCardNumber());
+        return response;
+    }
+}
+
+
+
+
+
+
+
+
+
+
